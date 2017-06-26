@@ -2,6 +2,7 @@
 #include <basic.h>
 
 #include <Int.h>
+#include <Bool.h>
 
 #define ORDER_CREATE 1
 #define ORDER_CALL 2
@@ -9,7 +10,7 @@
 #define ORDER_PUSH_OP 4
 #define ORDER_PUSH_PARAM 5
 
-class OpEqual : public Script
+class OpEqual : public Script // a = 2
 {
 public:
     OpEqual(Script * parent) : Script(parent) {
@@ -65,13 +66,12 @@ Script::Script(vector<string> & strs)
                 else if(isdigit(operand[0]))
                     triple.push_back(make_tuple(ORDER_PUSH_VAL, operand, i));
                 else if(strs[i][j] == '.' || strs[i][j] == '('){
-                            vector<Script*> ps;
-
-                            while(strs[i][j] != ')')
-                            {
-                                j++;
-                            }
+                        vector<Script*> ps;
+                        while(strs[i][j] != ')')
+                        {
+                            j++;
                         }
+                    }
                 else
                     triple.push_back(make_tuple(ORDER_PUSH_VAL, operand, i));
                 if(strs[i][j] == ';') if(triple.size() > 0){
@@ -175,7 +175,7 @@ void Script::process_op (vector<Script *> & st, string op)
     Script r = * st.back();  st.pop_back();
     Script l = * st.back();  st.pop_back();
 
-    if(l.operators.count(op))
+    if(l.operators.count(op) > 0)
     {
         Script * result = (l.operators[op]->Execute(r));
         st.push_back(result);

@@ -65,3 +65,46 @@
 1498421911 e:\projects\c++\scriptor\include\int.h
 	<Script.h>
 
+1498491274 source:e:\projects\c++\sc\main.cpp
+	<iostream>
+	<fstream>
+	<string>
+	<cstring>
+	<vector>
+	<Script.h>
+	<basic.h>
+
+1498480851 e:\projects\c++\sc\include\script.h
+	<string>
+	<map>
+	<vector>
+	<tuple>
+	<iostream>
+
+1498480851 e:\projects\c++\sc\include\basic.h
+	<string>
+	<cstring>
+	<vector>
+	<iostream>
+
+1498480851 source:e:\projects\c++\sc\src\basic.cpp
+	<basic.h>
+
+1498491274 source:e:\projects\c++\sc\src\script.cpp
+	"Script.h"
+	<basic.h>
+	<Int.h>
+	<Bool.h>
+
+1498480851 e:\projects\c++\sc\include\int.h
+	<Script.h>
+
+1498491274 source:e:\projects\c++\sc\src\int.cpp
+	"Int.h"
+
+1498491476 source:e:\projects\c++\sc\src\bool.cpp
+	"Bool.h"
+
+1498487378 e:\projects\c++\sc\include\bool.h
+	<Script.h>
+

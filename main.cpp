@@ -92,7 +92,6 @@ Script * ReadScript(char * file_path)
     {
         strs.push_back(str);
         int iter = 0;
-        ///ReadCommand(script, str, iter);
     }
     Script * script = new Script(strs);
     return script;
@@ -122,7 +121,6 @@ void Handler(Script &script)
         cmd = str;
         if(cmd == "all") cout << script.StackVariables();
         else if (cmd == "exit") break;
-        else ReadCommand(&script, cmd, t);
     }
 }
 

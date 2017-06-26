@@ -3,11 +3,6 @@
 class Operator : public Script
 {
 public:
-    Operator() : Script()
-    {
-
-    }
-
     Operator(Script * parent) : Script(parent)
     {
 
@@ -18,8 +13,8 @@ public:
         this->parent->GetType();
 
         if(parent.GetType() == "int"){
-            cout << "Int add types " << this->parent->GetType() << " with " << parent.GetType();
-            return new Script(nullptr, "int", to_string(stoi(this->parent->GetValue()) + stoi(parent.GetValue())));
+            cout << "Int add types " << this->parent->GetType() << " with " << parent.GetType() << "\n";
+            return new Int(to_string(stoi(this->parent->GetValue()) + stoi(parent.GetValue())));
         }
         else cout << "NOT INTEGER!";
         return nullptr;
