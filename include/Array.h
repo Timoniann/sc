@@ -11,6 +11,8 @@ class Array : public Script
         ~Array();
         Script * Execute(Script & parameter);
         static string TypeName;
+
+        string GetValue() override;
     protected:
         vector<Script*> arr;
     private:

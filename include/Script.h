@@ -24,7 +24,7 @@ class Script
         virtual Script * Execute(vector<Script*> & parameters);
         virtual Script * Execute(Script & parameter);
         static void process_op (vector<Script*> & st, string op);
-        string GetValue();
+        virtual string GetValue();
         void SetValue(string val);
         string GetType();
         Script * GetVariable(string val);

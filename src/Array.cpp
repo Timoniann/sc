@@ -10,8 +10,7 @@ Array::Array() : Script()
 {
     this->type = "array";
     this->SetValue("Standart.Array");
-    cout << "Hello, i am array\n";
-    //ctor
+    cout << "Creating array\n";
 }
 
 Array::~Array()
@@ -25,3 +24,12 @@ Script * Array::Execute(Script & parameter)
 }
 
 string Array::TypeName = "array";
+
+string Array::GetValue()
+{
+    string result;
+    for(int i = 0; i < arr.size(); i++)
+        result += arr[i]->GetValue() + ", ";
+    if(result.size() > 0) { result.pop_back(); result.pop_back(); }
+    return result;
+}

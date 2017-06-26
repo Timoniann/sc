@@ -19,13 +19,12 @@ public:
     }
     Script * Execute(Script & parameter)
     {
-        cout << "Equal " << parent->GetType() << " with " << parameter.GetType() << "\n";
         *parent = parameter;
         return parent;
     }
 };
 
-class OpComma : public Script // a == 2
+class OpComma : public Script // a , 2
 {
 public:
     OpComma (Script * parent) : Script(parent) {
@@ -36,7 +35,12 @@ public:
         cout << "Operator comma " << parent->GetType() << " with " << parameter.GetType() << "\n";
 
         if(parent->GetType() == Array::TypeName) parent->AddVar("Temp", &parameter);
-        else return new Array(parent, &parameter);
+        else
+        {
+            Script * result = new Array(parent, &parameter);
+            cout << result->GetValue() << " ------------------------ value\n";
+            return result;
+        }
         return parent;
     }
 };
@@ -212,7 +216,7 @@ Script * Script::GetVariable(string val)
     if(it != vars.end())
         return it->second;
     AddVar(val, new Script(this, "null", ""));
-    cout << "New variable\n";
+    //cout << "New variable\n";
     return vars[val];
 }
 
