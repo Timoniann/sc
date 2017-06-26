@@ -1,7 +1,16 @@
 #include "Array.h"
 
-Array::Array(string val) : Script()
+Array::Array(Script * p1, Script * p2) : Array()
 {
+    arr.push_back(p1);
+    arr.push_back(p2);
+}
+
+Array::Array() : Script()
+{
+    this->type = "array";
+    this->SetValue("Standart.Array");
+    cout << "Hello, i am array\n";
     //ctor
 }
 
@@ -12,5 +21,7 @@ Array::~Array()
 
 Script * Array::Execute(Script & parameter)
 {
-    return nullptr;
+    return this;
 }
+
+string Array::TypeName = "array";

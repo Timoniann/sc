@@ -3,6 +3,7 @@
 
 #include <Int.h>
 #include <Bool.h>
+#include <Array.h>
 
 #define ORDER_CREATE 1
 #define ORDER_CALL 2
@@ -24,9 +25,28 @@ public:
     }
 };
 
+class OpComma : public Script // a == 2
+{
+public:
+    OpComma (Script * parent) : Script(parent) {
+
+    }
+    Script * Execute(Script & parameter)
+    {
+        cout << "Operator comma " << parent->GetType() << " with " << parameter.GetType() << "\n";
+
+        if(parent->GetType() == Array::TypeName) parent->AddVar("Temp", &parameter);
+        else return new Array(parent, &parameter);
+        return parent;
+    }
+};
+
+
+
 Script::Script()
 {
     operators["="] = new OpEqual(this);
+    operators[","] = new OpComma(this);
 }
 
 Script::Script(Script * parent)

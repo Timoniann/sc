@@ -60,10 +60,12 @@ void Init()
     opers.push_back("!=");
     opers.push_back(">");
     opers.push_back("<");
+    opers.push_back(",");
 }
 
 int priority (string op) {
     return
+        op == "," ? 0 :
         op == "==" || op == "<" || op == ">" || op == "!=" ? 1 :
         op == "+" || op == "-" ? 2 :
         op == "*" || op == "/" || op == "%" ? 3 :

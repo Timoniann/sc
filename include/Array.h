@@ -6,11 +6,13 @@
 class Array : public Script
 {
     public:
-        Array(string val);
+        Array(Script * p1, Script * p2);
+        Array();
         ~Array();
         Script * Execute(Script & parameter);
+        static string TypeName;
     protected:
-
+        vector<Script*> arr;
     private:
 };
 
