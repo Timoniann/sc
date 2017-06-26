@@ -1,0 +1,67 @@
+# depslib dependency file v1.0
+1496765444 source:d:\proj\scriptor\main.cpp
+	<iostream>
+	<fstream>
+	<string>
+	<cstring>
+	<vector>
+	<Script.h>
+
+1496763851 source:d:\proj\scriptor\src\script.cpp
+	"Script.h"
+
+1496763851 d:\proj\scriptor\include\script.h
+	<string>
+	<map>
+
+1498474291 source:e:\projects\c++\scriptor\src\script.cpp
+	"Script.h"
+	<basic.h>
+	<Int.h>
+
+1498469673 e:\projects\c++\scriptor\include\script.h
+	<string>
+	<map>
+	<vector>
+	<tuple>
+	<iostream>
+
+1498478592 source:e:\projects\c++\scriptor\main.cpp
+	<iostream>
+	<fstream>
+	<string>
+	<cstring>
+	<vector>
+	<Script.h>
+	<basic.h>
+
+1498373796 source:e:\projects\c++\scriptor\src\function.cpp
+	"Function.h"
+
+1498373971 e:\projects\c++\scriptor\include\function.h
+	<string>
+	<vector>
+	<Variable.h>
+
+1498373633 e:\projects\c++\scriptor\include\variable.h
+	<string>
+	<map>
+
+1498372661 source:e:\projects\c++\scriptor\src\variable.cpp
+	"Variable.h"
+
+1498395402 e:\projects\c++\scriptor\include\basic.h
+	<string>
+	<cstring>
+	<vector>
+	<iostream>
+
+1498472149 source:e:\projects\c++\scriptor\src\basic.cpp
+	<basic.h>
+
+1498471761 source:e:\projects\c++\scriptor\src\int.cpp
+	"Int.h"
+
+1498421911 e:\projects\c++\scriptor\include\int.h
+	<Script.h>
+
