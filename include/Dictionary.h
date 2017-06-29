@@ -2,6 +2,7 @@
 #define DICTIONARY_H
 
 #include <vector>
+#include <iterator>
 
 using namespace std;
 
@@ -16,9 +17,16 @@ class Dictionary
             add(key, value);
         }
 
-        void add(KeyType key, ValueType value)
+        ValueType & add(KeyType key, ValueType value)
         {
             data.push_back(make_pair(key, value));
+            return data.back();
+        }
+
+        ValueType & add(KeyType key)
+        {
+            data.push_back(make_pair(key, nullptr));
+            return data.back().second;
         }
 
         void foreach(void func(KeyType key, ValueType value))
@@ -32,16 +40,45 @@ class Dictionary
                 func((*it).first, (*it).second);
         }
 
-        ValueType operator[](KeyType key)
+        ValueType & operator[](KeyType key)
         {
-            for(typename vector<pair<ValueType, KeyType>>::iterator it = data.begin(); it != data.end(); it++)
-                if(it.first == key) return it.second;
-            return 0;
+            for(typename vector<pair<KeyType, ValueType>>::iterator it = data.begin(); it != data.end(); it++)
+                if((*it).first == key) return (*it).second;
+
+            return add(key);
         }
 
-        ValueType operator[](int index)
+        ValueType & operator[](int index)
         {
             return data[index].second;
+        }
+
+        size_t size(){ return data.size(); }
+
+        int count(KeyType key)
+        {
+            int count = 0;
+            for(typename vector<pair<KeyType, ValueType>>::iterator it = data.begin(); it != data.end(); it++)
+                if((*it).first == key) count++;
+            return count;
+        }
+
+        typedef pair<KeyType, ValueType>* iterator;
+        typedef const pair<KeyType, ValueType>* const_iterator;
+
+        iterator begin() { return &data[0]; }
+        const_iterator begin() const { return &data[0]; }
+        iterator end() { return &data[size()];}
+        const_iterator end() const { return &data[size]; }
+
+
+        typedef typename vector<pair<KeyType, ValueType>>::iterator* vec_iterator;
+        vec_iterator find(KeyType key)
+        {
+            int count = 0;
+            for(typename vector<pair<KeyType, ValueType>>::iterator it = data.begin(); it != data.end(); it++)
+                if((*it).first == key) return it;
+            return data.back();
         }
     protected:
 

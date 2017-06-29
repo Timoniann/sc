@@ -199,14 +199,6 @@ string Script::StackVariables()
     string result;
 
     result = result + "Count: " + to_string(vars.size()) + "\n";
-    if(vars.size() > 0)
-    {
-
-        for (unordered_map<string, Script*>::iterator it = vars.end(); it != vars.begin(); advance(it, 1))
-        {
-            cout << "1";
-        }
-    }
 
     for(pair<string, Script*> p : vars)
         if(p.second != nullptr)
@@ -234,9 +226,7 @@ void Script::process_op (vector<Script *> & st, string op)
 
 Script * Script::GetVariable(string val)
 {
-    unordered_map<string, Script*>::iterator it = vars.find(val);
-    if(it != vars.end())
-        return it->second;
+    if(vars.count(val)) return vars[val];
     AddVar(val, new Script(this, "null", ""));
     //cout << "New variable\n";
     return vars[val];
@@ -258,4 +248,4 @@ string Script::GetType()
     return type;
 }
 
-//unordered_map<string, Script*> Script::operators;
+//Dictionary<string, Script*> Script::operators;

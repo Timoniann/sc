@@ -2,7 +2,7 @@
 #define SCRIPT_H
 
 #include <string>
-#include <unordered_map>
+#include <Dictionary.h>
 #include <vector>
 #include <tuple>
 #include <iostream>
@@ -30,15 +30,15 @@ class Script
         Script * GetVariable(string val);
     protected:
         Script * parent = nullptr;
-        unordered_map<string, Script*> operators;
+        Dictionary<string, Script*> operators;
         string type;
     private:
         vector<vector<tuple<unsigned int, string, int>>> cmds;
-        //unordered_map<string, Script> operators;
+        //Dictionary<string, Script> operators;
         //make_tuple(COMMAND_ID, "variable", "values");
-        unordered_map<string, Script*> vars;
+        Dictionary<string, Script*> vars;
         vector<string> params;
-        unordered_map<string, Script*> funcs;
+        Dictionary<string, Script*> funcs;
         string value;
 };
 

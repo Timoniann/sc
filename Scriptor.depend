@@ -65,7 +65,7 @@
 1498421911 e:\projects\c++\scriptor\include\int.h
 	<Script.h>
 
-1498763343 source:e:\projects\c++\sc\main.cpp
+1498763702 source:e:\projects\c++\sc\main.cpp
 	<iostream>
 	<fstream>
 	<string>
@@ -75,9 +75,9 @@
 	<basic.h>
 	<Dictionary.h>
 
-1498748588 e:\projects\c++\sc\include\script.h
+1498764235 e:\projects\c++\sc\include\script.h
 	<string>
-	<unordered_map>
+	<Dictionary.h>
 	<vector>
 	<tuple>
 	<iostream>
@@ -133,6 +133,7 @@
 1498762367 source:e:\projects\c++\sc\src\dictionary.cpp
 	"Dictionary.h"
 
-1498763150 e:\projects\c++\sc\include\dictionary.h
+1498769475 e:\projects\c++\sc\include\dictionary.h
 	<vector>
+	<iterator>
 
