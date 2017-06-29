@@ -27,9 +27,10 @@ string Array::TypeName = "array";
 
 string Array::GetValue()
 {
-    string result;
+    string result = "Array(";
     for(int i = 0; i < arr.size(); i++)
         result += arr[i]->GetValue() + ", ";
     if(result.size() > 0) { result.pop_back(); result.pop_back(); }
+    result += ")";
     return result;
 }

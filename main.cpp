@@ -6,7 +6,7 @@
 
 #include <Script.h>
 #include <basic.h>
-
+#include <Dictionary.h>
 
 void ClearSpaces(string & str, int position = 0)
 {
@@ -126,6 +126,11 @@ void Handler(Script &script)
 
 int main(int argc, char ** argv)
 {
+    /*
+    Dictionary<string, unsigned int> dic("Hello", 1);
+    dic.add("Hello2", 2);
+    dic.foreachReverse([](string key, unsigned int value){cout << key; cout << value;});
+    return 0;*/
     Init();
     if (argc == 1) argv[1] = "bin/Debug/main.sc";
         //Log("Nothing to interpret\n");

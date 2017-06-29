@@ -65,7 +65,7 @@
 1498421911 e:\projects\c++\scriptor\include\int.h
 	<Script.h>
 
-1498491274 source:e:\projects\c++\sc\main.cpp
+1498763343 source:e:\projects\c++\sc\main.cpp
 	<iostream>
 	<fstream>
 	<string>
@@ -73,10 +73,11 @@
 	<vector>
 	<Script.h>
 	<basic.h>
+	<Dictionary.h>
 
-1498506547 e:\projects\c++\sc\include\script.h
+1498748588 e:\projects\c++\sc\include\script.h
 	<string>
-	<map>
+	<unordered_map>
 	<vector>
 	<tuple>
 	<iostream>
@@ -90,9 +91,10 @@
 1498497643 source:e:\projects\c++\sc\src\basic.cpp
 	<basic.h>
 
-1498505693 source:e:\projects\c++\sc\src\script.cpp
+1498753810 source:e:\projects\c++\sc\src\script.cpp
 	"Script.h"
 	<basic.h>
+	<algorithm>
 	<Int.h>
 	<Bool.h>
 	<Array.h>
@@ -109,9 +111,28 @@
 1498487378 e:\projects\c++\sc\include\bool.h
 	<Script.h>
 
-1498506547 source:e:\projects\c++\sc\src\array.cpp
+1498740086 source:e:\projects\c++\sc\src\array.cpp
 	"Array.h"
 
 1498506547 e:\projects\c++\sc\include\array.h
 	<Script.h>
+
+1498757798 source:e:\projects\c++\sc\src\iterator.cpp
+	"Iterator.h"
+
+1498759427 e:\projects\c++\sc\include\iterator.h
+	<iterator>
+
+1498759303 source:e:\projects\c++\sc\src\container.cpp
+	"Container.h"
+
+1498759065 e:\projects\c++\sc\include\container.h
+	<Iterator.h>
+	<memory>
+
+1498762367 source:e:\projects\c++\sc\src\dictionary.cpp
+	"Dictionary.h"
+
+1498763150 e:\projects\c++\sc\include\dictionary.h
+	<vector>
 

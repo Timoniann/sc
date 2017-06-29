@@ -1,6 +1,6 @@
 #include "Script.h"
 #include <basic.h>
-
+#include <algorithm>
 #include <Int.h>
 #include <Bool.h>
 #include <Array.h>
@@ -19,7 +19,17 @@ public:
     }
     Script * Execute(Script & parameter)
     {
+        if(parameter.GetType() == Array::TypeName){
+            cout << parameter.GetValue() << " - EQUAL WITH ARRAY\n";
+        }
+        //delete parent;
+
         *parent = parameter;
+        //parent = &parameter;
+        if(parameter.GetType() == Array::TypeName){
+            cout << "Here\n";
+            cout << parent->GetValue();
+        }
         return parent;
     }
 };
@@ -182,11 +192,22 @@ void Script::AddVar(string name, Script * value)
     vars[name] = value;
 }
 
+Hand(string s){}
+
 string Script::StackVariables()
 {
     string result;
 
     result = result + "Count: " + to_string(vars.size()) + "\n";
+    if(vars.size() > 0)
+    {
+
+        for (unordered_map<string, Script*>::iterator it = vars.end(); it != vars.begin(); advance(it, 1))
+        {
+            cout << "1";
+        }
+    }
+
     for(pair<string, Script*> p : vars)
         if(p.second != nullptr)
         result += p.first + " = " + p.second->value + " (" + p.second->GetType() + ")\n";
@@ -196,23 +217,24 @@ string Script::StackVariables()
 
 void Script::process_op (vector<Script *> & st, string op)
 {
-    Script r = * st.back();  st.pop_back();
-    Script l = * st.back();  st.pop_back();
+    Script * r = st.back();  st.pop_back();
+    Script * l = st.back();  st.pop_back();
 
-    if(l.operators.count(op) > 0)
+    if(l->operators.count(op) > 0)
     {
-        Script * result = (l.operators[op]->Execute(r));
+        Script * result = (l->operators[op]->Execute(*r));
+        if(op == ",") cout << result->GetValue() << " - value of result(must be 'Array(...)')!\n";
         st.push_back(result);
         return;
     }
-    Log("Operator '" + op + "' not declared in type '" + l.GetType() + "'", 5);
+    Log("Operator '" + op + "' not declared in type '" + l->GetType() + "'", 5);
     st.push_back(new Script(nullptr, "null", ""));
 
 }
 
 Script * Script::GetVariable(string val)
 {
-    map<string, Script*>::iterator it = vars.find(val);
+    unordered_map<string, Script*>::iterator it = vars.find(val);
     if(it != vars.end())
         return it->second;
     AddVar(val, new Script(this, "null", ""));
@@ -236,4 +258,4 @@ string Script::GetType()
     return type;
 }
 
-//map<string, Script*> Script::operators;
+//unordered_map<string, Script*> Script::operators;

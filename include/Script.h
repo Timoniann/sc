@@ -2,7 +2,7 @@
 #define SCRIPT_H
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <tuple>
 #include <iostream>
@@ -30,15 +30,15 @@ class Script
         Script * GetVariable(string val);
     protected:
         Script * parent = nullptr;
-        map<string, Script*> operators;
+        unordered_map<string, Script*> operators;
         string type;
     private:
         vector<vector<tuple<unsigned int, string, int>>> cmds;
-        //map<string, Script> operators;
+        //unordered_map<string, Script> operators;
         //make_tuple(COMMAND_ID, "variable", "values");
-        map<string, Script*> vars;
+        unordered_map<string, Script*> vars;
         vector<string> params;
-        map<string, Script*> funcs;
+        unordered_map<string, Script*> funcs;
         string value;
 };
 
