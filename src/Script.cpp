@@ -1,15 +1,14 @@
 #include "Script.h"
 #include <basic.h>
 #include <algorithm>
-#include <Int.h>
-#include <Bool.h>
-#include <Array.h>
 
 #define ORDER_CREATE 1
 #define ORDER_CALL 2
 #define ORDER_PUSH_VAL 3
 #define ORDER_PUSH_OP 4
 #define ORDER_PUSH_PARAM 5
+
+/// SCRIPT -----------------------------------
 
 class OpEqual : public Script // a = 2
 {
@@ -54,8 +53,6 @@ public:
         return parent;
     }
 };
-
-
 
 Script::Script()
 {
@@ -247,5 +244,127 @@ string Script::GetType()
 {
     return type;
 }
+
+/// ----------------------SCRIPT
+/// INT ------------------------
+
+class Operator : public Script
+{
+public:
+    Operator(Script * parent) : Script(parent)
+    {
+
+    }
+    Script * Execute(Script & parent)
+    {
+        parent.GetType();
+        this->parent->GetType();
+
+        if(parent.GetType() == "int"){
+            return new Int(to_string(stoi(this->parent->GetValue()) + stoi(parent.GetValue())));
+        }
+        else cout << "NOT INTEGER!";
+        return nullptr;
+            //return this.value - parent.value;
+    }
+};
+
+Int::Int(string val) : Script()
+{
+    cout << "New int (" << val << ")\n";
+    this->type = "int";
+    SetValue(val);
+    operators["+"] = new Operator(this);
+}
+
+Int::~Int()
+{
+    //dtor
+}
+
+Script * Int::Execute(Script & parent)
+{
+    return this;
+}
+
+/// ------------------------- INT
+/// BOOL ------------------------
+
+class OpEquals : public Script // a == 2
+{
+public:
+    OpEquals(Script * parent) : Script(parent)
+    {
+
+    }
+    Script * Execute(Script & parameter)
+    {
+        cout << "Equals(==) " << parent->GetType() << " with " << parameter.GetType() << "\n";
+        if(parent->GetType() != parameter.GetType() || parent->GetValue() != parameter.GetValue()) return new Script(nullptr, "null", "");
+        return new Bool("true");
+    }
+};
+
+Bool::Bool(string val) : Script()
+{
+    cout << "New bool (" << val << ")\n";
+    this->type = "bool";
+    if(val == "" || val == "false" || val == "0")
+        SetValue("false");
+    else SetValue("true");
+
+    operators["=="] = new OpEquals(this);
+}
+
+Bool::~Bool()
+{
+    //dtor
+}
+
+Script * Bool::Execute(Script & parent)
+{
+    return this;
+}
+
+/// ------------------------ BOOL
+/// ARRAY -----------------------
+
+Array::Array(Script * p1, Script * p2) : Array()
+{
+    vars.add(p1);
+    vars.add(p2);
+    //arr.push_back(p1);
+    //arr.push_back(p2);
+}
+
+Array::Array() : Script()
+{
+    this->type = "array";
+    this->SetValue("Standart.Array");
+    cout << "Creating array\n";
+}
+
+Array::~Array()
+{
+    //dtor
+}
+
+Script * Array::Execute(Script & parameter)
+{
+    return this;
+}
+
+string Array::TypeName = "array";
+
+string Array::GetValue()
+{
+    string result = "Array(";
+    for(int i = 0; i < vars.size(); i++)
+        result += vars[i]->GetValue() + ", ";
+    if(result.size() > 0) { result.pop_back(); result.pop_back(); }
+    result += ")";
+    return result;
+}
+
 
 //Dictionary<string, Script*> Script::operators;

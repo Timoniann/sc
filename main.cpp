@@ -1,12 +1,8 @@
-#include <iostream>
 #include <fstream>
-#include <string>
 #include <cstring>
-#include <vector>
 
 #include <Script.h>
 #include <basic.h>
-#include <Dictionary.h>
 
 void ClearSpaces(string & str, int position = 0)
 {

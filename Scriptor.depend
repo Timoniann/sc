@@ -65,56 +65,49 @@
 1498421911 e:\projects\c++\scriptor\include\int.h
 	<Script.h>
 
-1498763702 source:e:\projects\c++\sc\main.cpp
-	<iostream>
+1498817031 source:e:\projects\c++\sc\main.cpp
 	<fstream>
-	<string>
 	<cstring>
-	<vector>
 	<Script.h>
 	<basic.h>
-	<Dictionary.h>
 
-1498764235 e:\projects\c++\sc\include\script.h
+1498817616 e:\projects\c++\sc\include\script.h
 	<string>
 	<Dictionary.h>
 	<vector>
 	<tuple>
 	<iostream>
 
-1498480851 e:\projects\c++\sc\include\basic.h
+1498815785 e:\projects\c++\sc\include\basic.h
 	<string>
 	<cstring>
 	<vector>
 	<iostream>
 
-1498497643 source:e:\projects\c++\sc\src\basic.cpp
+1498815785 source:e:\projects\c++\sc\src\basic.cpp
 	<basic.h>
 
-1498753810 source:e:\projects\c++\sc\src\script.cpp
+1498817724 source:e:\projects\c++\sc\src\script.cpp
 	"Script.h"
 	<basic.h>
 	<algorithm>
-	<Int.h>
-	<Bool.h>
-	<Array.h>
 
-1498480851 e:\projects\c++\sc\include\int.h
+1498815785 e:\projects\c++\sc\include\int.h
 	<Script.h>
 
-1498504275 source:e:\projects\c++\sc\src\int.cpp
+1498815785 source:e:\projects\c++\sc\src\int.cpp
 	"Int.h"
 
-1498491476 source:e:\projects\c++\sc\src\bool.cpp
+1498815785 source:e:\projects\c++\sc\src\bool.cpp
 	"Bool.h"
 
-1498487378 e:\projects\c++\sc\include\bool.h
+1498815785 e:\projects\c++\sc\include\bool.h
 	<Script.h>
 
-1498740086 source:e:\projects\c++\sc\src\array.cpp
+1498815785 source:e:\projects\c++\sc\src\array.cpp
 	"Array.h"
 
-1498506547 e:\projects\c++\sc\include\array.h
+1498815785 e:\projects\c++\sc\include\array.h
 	<Script.h>
 
 1498757798 source:e:\projects\c++\sc\src\iterator.cpp
@@ -133,7 +126,7 @@
 1498762367 source:e:\projects\c++\sc\src\dictionary.cpp
 	"Dictionary.h"
 
-1498769475 e:\projects\c++\sc\include\dictionary.h
+1498817845 e:\projects\c++\sc\include\dictionary.h
 	<vector>
 	<iterator>
 

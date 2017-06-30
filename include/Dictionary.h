@@ -29,6 +29,16 @@ class Dictionary
             return data.back().second;
         }
 
+        ValueType & add(ValueType value)
+        {
+            data.push_back(make_pair("", value));
+        }
+
+        ValueType & push_back(ValueType value)
+        {
+            data.push_back(make_pair("", value));
+        }
+
         void foreach(void func(KeyType key, ValueType value))
         {
             for(typename vector<pair<KeyType, ValueType>>::iterator it = data.begin(); it != data.end(); it++)

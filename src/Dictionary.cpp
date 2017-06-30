@@ -1,4 +1,4 @@
-#include "Dictionary.h"
+#include <Dictionary.h>
 
 template<typename KeyType, typename ValueType>
 Dictionary<KeyType, ValueType>::Dictionary()
