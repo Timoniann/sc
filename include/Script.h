@@ -26,13 +26,12 @@ class Script
         Script(Script * parent, string type, string value);
         Script(Script * parent);
 
-
-
         virtual Script * Execute(vector<Script*> & parameters);
         virtual Script * Execute(Script & parameter);
         virtual Script * Execute(Array & params){};
         virtual string GetValue();
 
+        void SetConstructor(Script* (* func)(Script * self, Script * params));
         void AddVar(string name, Script * value);
         void SetValue(string val);
 
@@ -45,12 +44,13 @@ class Script
     protected:
         Script * parent = nullptr;
         Dictionary<string, Script*> vars;
+        Dictionary<string, Script*> funcs;
         string type;
+        Script * (* constructor) (Script * self, Script * params) = nullptr;
     private:
         vector<vector<tuple<unsigned int, string, int>>> cmds;
         //Dictionary<string, Script> operators;
         //make_tuple(COMMAND_ID, "variable", "values");
-        Dictionary<string, Script*> funcs;
         vector<string> params;
         string value;
         static void process_op (vector<Script*> & st, string op);
@@ -90,12 +90,10 @@ class Array : public Script
     private:
 };
 
-class Operator : Script
+class Operator
 {
 public:
-    //Operator(Script* (* func)(Array * params));
     Operator(Script* (* func)(Script * p1, Script * p2));
-    //Script * Execute(Array * params);
     Script * Execute(Script * p1, Script * p2);
 
 protected:

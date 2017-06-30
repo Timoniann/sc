@@ -20,7 +20,7 @@ class Dictionary
         ValueType & add(KeyType key, ValueType value)
         {
             data.push_back(make_pair(key, value));
-            return data.back();
+            return data.back().second;
         }
 
         ValueType & add(KeyType key)
@@ -79,7 +79,7 @@ class Dictionary
         iterator begin() { return &data[0]; }
         const_iterator begin() const { return &data[0]; }
         iterator end() { return &data[size()];}
-        const_iterator end() const { return &data[size]; }
+        const_iterator end() const { return &data[size()]; }
 
 
         typedef typename vector<pair<KeyType, ValueType>>::iterator* vec_iterator;

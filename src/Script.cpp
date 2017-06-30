@@ -10,50 +10,6 @@
 
 /// SCRIPT -----------------------------------
 
-class OpEqual : public Script // a = 2
-{
-public:
-    OpEqual(Script * parent) : Script(parent) {
-
-    }
-    Script * Execute(Script & parameter)
-    {
-        if(parameter.GetType() == Array::TypeName){
-            cout << parameter.GetValue() << " - EQUAL WITH ARRAY\n";
-        }
-        //delete parent;
-
-        *parent = parameter;
-        //parent = &parameter;
-        if(parameter.GetType() == Array::TypeName){
-            cout << "Here\n";
-            cout << parent->GetValue();
-        }
-        return parent;
-    }
-};
-
-class OpComma : public Script // a , 2
-{
-public:
-    OpComma (Script * parent) : Script(parent) {
-
-    }
-    Script * Execute(Script & parameter)
-    {
-        cout << "Operator comma " << parent->GetType() << " with " << parameter.GetType() << "\n";
-
-        if(parent->GetType() == Array::TypeName) parent->AddVar("Temp", &parameter);
-        else
-        {
-            Script * result = new Array(parent, &parameter);
-            cout << result->GetValue() << " ------------------------ value\n";
-            return result;
-        }
-        return parent;
-    }
-};
-
 Script::Script()
 {
 
@@ -123,9 +79,16 @@ Script::Script(vector<string> & strs)
     }
 }
 
+Script::Script(string type, string value)
+{
+    this->type = type;
+    this->value = value;
+}
 
 Script * Script::Execute(vector<Script*> & parameters)
 {
+    if(constructor != nullptr)
+        return constructor(this, parameters.size() == 0 ? new Script("null", "") : parameters[0]);
     for(int i = 0; i < cmds.size(); i++)
     {
         vector<tuple<unsigned int, string, int>> cmd = cmds[i];
@@ -182,9 +145,14 @@ Script * Script::Execute(Script & parameter)
     return Execute(p);
 }
 
+void Script::SetConstructor(Script* (* func)(Script * self, Script * params))
+{
+    constructor = func;
+}
 
 void Script::AddVar(string name, Script * value)
 {
+    //vars.add(value);
     vars[name] = value;
 }
 
@@ -198,7 +166,7 @@ string Script::StackVariables()
 
     for(pair<string, Script*> p : vars)
         if(p.second != nullptr)
-        result += p.first + " = " + p.second->value + " (" + p.second->GetType() + ")\n";
+        result += p.first + " = " + p.second->GetValue() + " (" + p.second->GetType() + ")\n";
 
     return result;
 }
@@ -210,7 +178,6 @@ void Script::process_op (vector<Script *> & st, string op)
 
     auto operators = GetOperator();
 
-    cout << "Starting operation doing\n";
     cout << l->GetValue() << "(" + l->GetType() + ")" << ", " << r->GetValue() << "(" + r->GetType() + ")" << "\n";
     if(operators.count(op) > 0)
     {
@@ -221,32 +188,22 @@ void Script::process_op (vector<Script *> & st, string op)
             if(get<0>(*it) == l->GetType() && get<1>(*it) == r->GetType())
                 { st.push_back(get<2>(*it)->Execute(l, r)); return; }
         }
-        cout << "Not default operator...\n";
+
         for(mass::iterator it = t.begin(); it != t.end(); it++)
         {
             if(get<0>(*it) == l->GetType() && get<1>(*it) == "null")
                 { st.push_back(get<2>(*it)->Execute(l, r)); return; }
         }
-        cout << "Not right null operator...\n";
+
         for(mass::iterator it = t.begin(); it != t.end(); it++)
         {
             if(get<0>(*it) == "null" && get<1>(*it) == "null")
                 { st.push_back(get<2>(*it)->Execute(l, r)); return; }
         }
-        cout << op << "// Not have defaulting operators for this... (" << l->GetType() << " " << op << " " << r->GetType() << ")\n";
-
     }
     else cout << "Not have operator '" << op << "' (" << operators.size() << " - size)\n";
-    //if();
-    /*
-    if(l->operators.count(op) > 0)
-    {
-        Script * result = (l->operators[op]->Execute(*r));
-        if(op == ",") cout << result->GetValue() << " - value of result(must be 'Array(...)')!\n";
-        st.push_back(result);
-        return;
-    }
-    Log("Operator '" + op + "' not declared in type '" + l->GetType() + "'", 5);*/
+
+    Log("Operator '" + op + "' not declared in type '" + l->GetType() + "'", 5);
     st.push_back(new Script(nullptr, "null", ""));
 
 }
@@ -422,16 +379,51 @@ Script * Plus(Script * p1, Script * p2)
 Script * Assign(Script * p1, Script * p2)
 {
     //delete *p1;
-
     Script::copy(p1, p2);
-    //*p1 = *p2;
     return p1;
+}
+
+Script * Multi(Script * p1, Script * p2)
+{
+    return new Int(to_string(stoi(p1->GetValue()) * stoi(p2->GetValue())));
+}
+
+Script * Comma(Script * p1, Script * p2)
+{
+    return new Array(p1, p2);
+}
+
+Script * ArrayPlus(Script * p1, Script * p2)
+{
+    cout << "ARRAY + \n";
+    p1->AddVar("23", p2);
+    return p1;
+}
+
+Script * IntConstructor(Script * self, Script * params)
+{
+    cout << "Hello, world\n";
+    return nullptr;
 }
 
 void InitOperators()
 {
     operators["+"].push_back(make_tuple("int", "int", new Operator(Plus)));
     operators["="].push_back(make_tuple("null", "null", new Operator(Assign)));
+    operators["*"].push_back(make_tuple("int", "int", new Operator(Multi)));
+    operators[","].push_back(make_tuple("null", "null", new Operator(Comma)));
+    operators["+"].push_back(make_tuple("array", "null", new Operator(ArrayPlus)));
+
+    vector<Script*> scripts;
+    scripts.push_back(new Script("int", "0"));
+    scripts[0]->SetConstructor(IntConstructor);
+    cout << "-----------------------OWN EXECUTING...----------------------------------\n";
+
+    Script temp("i", "2");
+    scripts[0]->Execute(temp);
+
+    cout << "-------------------------------------------------------------------------\n";
+
 }
 
 map<string, vector<tuple<string, string, Operator*>>> GetOperator()

@@ -115,7 +115,8 @@ void Handler(Script &script)
         ZeroMemory(str, 256);
         cin.getline(str, 256);
         cmd = str;
-        if(cmd == "all") cout << script.StackVariables();
+        if(cmd == "all") { cout << script.StackVariables(); }
+
         else if (cmd == "exit") break;
     }
 }
