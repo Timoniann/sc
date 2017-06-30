@@ -10,7 +10,6 @@
 
 using namespace std;
 
-class Array;
 class Script;
 class Operator;
 
@@ -18,8 +17,12 @@ static map<string, vector<tuple<string, string, Operator*>>> operators;
 
 class Script
 {
-    friend class Array;
     public:
+
+        Dictionary<string, Script*> vars;
+        Dictionary<string, Script*> funcs;
+        Script * parent = nullptr;
+
         Script();
         Script(vector<string> & strs);
         Script(string type, string value);
@@ -28,7 +31,7 @@ class Script
 
         virtual Script * Execute(vector<Script*> & parameters);
         virtual Script * Execute(Script & parameter);
-        virtual Script * Execute(Array & params){};
+        virtual Script * Execute(string param);
         virtual string GetValue();
 
         void SetConstructor(Script* (* func)(Script * self, Script * params));
@@ -41,10 +44,10 @@ class Script
         Script * GetVariable(string val);
 
         static void copy(Script * s1, Script * s2);
+
+
     protected:
-        Script * parent = nullptr;
-        Dictionary<string, Script*> vars;
-        Dictionary<string, Script*> funcs;
+
         string type;
         Script * (* constructor) (Script * self, Script * params) = nullptr;
     private:
@@ -54,40 +57,6 @@ class Script
         vector<string> params;
         string value;
         static void process_op (vector<Script*> & st, string op);
-};
-
-class Int : public Script
-{
-    public:
-        Int(string val);
-        ~Int();
-        Script * Execute(Script & parent);
-    protected:
-    private:
-};
-
-class Bool : public Script
-{
-    public:
-        Bool(string val);
-        ~Bool();
-        Script * Execute(Script & parent);
-    protected:
-
-    private:
-};
-
-class Array : public Script
-{
-    public:
-        Array(Script * p1, Script * p2);
-        Array();
-        ~Array();
-        Script * Execute(Script & parameter);
-        static string TypeName;
-        string GetValue() override;
-    protected:
-    private:
 };
 
 class Operator
@@ -104,5 +73,7 @@ protected:
 void InitOperators();
 
 map<string, vector<tuple<string, string, Operator*>>> GetOperator();
+
+void Scripting(Script * global);
 
 #endif // SCRIPT_H

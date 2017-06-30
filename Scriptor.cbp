@@ -34,15 +34,10 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
-		<Unit filename="include/Array.h" />
-		<Unit filename="include/Bool.h" />
-		<Unit filename="include/Int.h" />
+		<Unit filename="include/Dictionary.h" />
 		<Unit filename="include/Script.h" />
 		<Unit filename="include/basic.h" />
 		<Unit filename="main.cpp" />
-		<Unit filename="src/Array.cpp" />
-		<Unit filename="src/Bool.cpp" />
-		<Unit filename="src/Int.cpp" />
 		<Unit filename="src/Script.cpp" />
 		<Unit filename="src/basic.cpp" />
 		<Extensions>

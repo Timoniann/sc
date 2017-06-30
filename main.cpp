@@ -107,7 +107,8 @@ void Handler(Script &script)
     int t = 0;
 
     vector<Script*> p;
-    cout << "Exit with status: " << script.Execute(p)->GetValue() << "\n";
+    Scripting(&script);
+    //cout << "Exit with status: " << script.Execute(p)->GetValue() << "\n";
     cout << "You can write 'exit' or other script's commands ('all')\n";
     while(true)
     {

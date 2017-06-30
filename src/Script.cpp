@@ -8,6 +8,7 @@
 #define ORDER_PUSH_OP 4
 #define ORDER_PUSH_PARAM 5
 
+Script * _global;
 /// SCRIPT -----------------------------------
 
 Script::Script()
@@ -110,7 +111,7 @@ Script * Script::Execute(vector<Script*> & parameters)
             case ORDER_PUSH_VAL:
                 {
                     string val = get<1>(t);
-                    if(isdigit(val[0])) st.push_back(new Int(val));
+                    if(isdigit(val[0])) { cout << val << " - digin\n"; st.push_back(_global->funcs["int"]->Execute(val)); }
                     else st.push_back(GetVariable(val));
                 }
             break;
@@ -143,6 +144,12 @@ Script * Script::Execute(Script & parameter)
     vector<Script*> p;
     p.push_back(&parameter);
     return Execute(p);
+}
+
+Script * Script::Execute(string param)
+{
+    Script * p = new Script("string", param);
+    return Execute(*p);
 }
 
 void Script::SetConstructor(Script* (* func)(Script * self, Script * params))
@@ -240,124 +247,6 @@ void Script::copy(Script * s1, Script * s2)
 }
 
 /// ----------------------SCRIPT
-/// INT ------------------------
-
-class OperatorPlus : public Script
-{
-public:
-    OperatorPlus(Script * parent) : Script(parent)
-    {
-
-    }
-    Script * Execute(Script & parent)
-    {
-        parent.GetType();
-        this->parent->GetType();
-
-        if(parent.GetType() == "int"){
-            return new Int(to_string(stoi(this->parent->GetValue()) + stoi(parent.GetValue())));
-        }
-        else cout << "NOT INTEGER!";
-        return nullptr;
-            //return this.value - parent.value;
-    }
-};
-
-Int::Int(string val) : Script()
-{
-    cout << "New int (" << val << ")\n";
-    this->type = "int";
-    SetValue(val);
-}
-
-Int::~Int()
-{
-    //dtor
-}
-
-Script * Int::Execute(Script & parent)
-{
-    return this;
-}
-
-/// ------------------------- INT
-/// BOOL ------------------------
-
-class OpEquals : public Script // a == 2
-{
-public:
-    OpEquals(Script * parent) : Script(parent)
-    {
-
-    }
-    Script * Execute(Script & parameter)
-    {
-        cout << "Equals(==) " << parent->GetType() << " with " << parameter.GetType() << "\n";
-        if(parent->GetType() != parameter.GetType() || parent->GetValue() != parameter.GetValue()) return new Script(nullptr, "null", "");
-        return new Bool("true");
-    }
-};
-
-Bool::Bool(string val) : Script()
-{
-    cout << "New bool (" << val << ")\n";
-    this->type = "bool";
-    if(val == "" || val == "false" || val == "0")
-        SetValue("false");
-    else SetValue("true");
-}
-
-Bool::~Bool()
-{
-    //dtor
-}
-
-Script * Bool::Execute(Script & parent)
-{
-    return this;
-}
-
-/// ------------------------ BOOL
-/// ARRAY -----------------------
-
-Array::Array(Script * p1, Script * p2) : Array()
-{
-    vars.add(p1);
-    vars.add(p2);
-    //arr.push_back(p1);
-    //arr.push_back(p2);
-}
-
-Array::Array() : Script()
-{
-    this->type = "array";
-    this->SetValue("Standart.Array");
-    cout << "Creating array\n";
-}
-
-Array::~Array()
-{
-    //dtor
-}
-
-Script * Array::Execute(Script & parameter)
-{
-    return this;
-}
-
-string Array::TypeName = "array";
-
-string Array::GetValue()
-{
-    string result = "Array(";
-    for(int i = 0; i < vars.size(); i++)
-        result += vars[i]->GetValue() + ", ";
-    if(result.size() > 0) { result.pop_back(); result.pop_back(); }
-    result += ")";
-    return result;
-}
-
-/// ----------------------- ARRAY
 /// OPERATOR --------------------
 
 Operator::Operator(Script* (* func)(Script * p1, Script * p2))
@@ -371,9 +260,10 @@ Script * Operator::Execute(Script * p1, Script * p2)
 }
 
 //Dictionary<string, Script*> Script::operators;
+
 Script * Plus(Script * p1, Script * p2)
 {
-    return new Int(to_string(stoi(p1->GetValue()) + stoi(p2->GetValue())));
+    return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) + stoi(p2->GetValue())));
 }
 
 Script * Assign(Script * p1, Script * p2)
@@ -385,12 +275,15 @@ Script * Assign(Script * p1, Script * p2)
 
 Script * Multi(Script * p1, Script * p2)
 {
-    return new Int(to_string(stoi(p1->GetValue()) * stoi(p2->GetValue())));
+    return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) * stoi(p2->GetValue())));
 }
 
 Script * Comma(Script * p1, Script * p2)
 {
-    return new Array(p1, p2);
+    Script * result = _global->funcs["array"]->Execute("Array");
+    result->vars.add(p1);
+    result->vars.add(p2);
+    return result;
 }
 
 Script * ArrayPlus(Script * p1, Script * p2)
@@ -402,8 +295,44 @@ Script * ArrayPlus(Script * p1, Script * p2)
 
 Script * IntConstructor(Script * self, Script * params)
 {
-    cout << "Hello, world\n";
-    return nullptr;
+    if(params->GetValue() == "") {
+        if(params->vars.size() != 0)
+        {
+            cout << params->vars.size() << " - size "; self->SetValue(params->vars[0]->GetValue());
+            return self;
+        }
+        else
+        {
+            self->SetValue("0");
+            return self;
+        }
+    }
+    self->SetValue(params->GetValue());
+    cout << "Int constructor\n";
+    return self;
+}
+
+Script * ArrayConstructor(Script * self, Script * params)
+{
+    self->SetValue(params->GetValue());
+    cout << "Array constructor\n";
+    return self;
+}
+
+Script * SizeConstructor(Script * self, Script * params)
+{
+    return new Script("int", to_string(self->parent->vars.size()));
+}
+
+
+string GetValue(Script * self)
+{
+    string result = "Array(";
+    for(int i = 0; i < self->vars.size(); i++)
+        result += self->vars[i]->GetValue() + ", ";
+    if(result.size() > 0) { result.pop_back(); result.pop_back(); }
+    result += ")";
+    return result;
 }
 
 void InitOperators()
@@ -414,19 +343,29 @@ void InitOperators()
     operators[","].push_back(make_tuple("null", "null", new Operator(Comma)));
     operators["+"].push_back(make_tuple("array", "null", new Operator(ArrayPlus)));
 
-    vector<Script*> scripts;
-    scripts.push_back(new Script("int", "0"));
-    scripts[0]->SetConstructor(IntConstructor);
-    cout << "-----------------------OWN EXECUTING...----------------------------------\n";
-
-    Script temp("i", "2");
-    scripts[0]->Execute(temp);
-
-    cout << "-------------------------------------------------------------------------\n";
-
 }
 
 map<string, vector<tuple<string, string, Operator*>>> GetOperator()
 {
     return operators;
+}
+
+void Scripting(Script * global)
+{
+
+    Script * _int = new Script("int", "0");
+        _int->SetConstructor(IntConstructor);
+    global->funcs.add("int", _int);
+        Script * _array = new Script("array", "[]");
+        _array->SetConstructor(ArrayConstructor);
+            Script * sizeFunc = new Script(_array);
+            sizeFunc->SetConstructor(SizeConstructor);
+        _array->funcs.add("size", sizeFunc);
+    global->funcs.add("array", _array);
+
+    _global = global;
+
+    /// Exec\n
+    Script temp(global);
+    global->Execute(temp);
 }
