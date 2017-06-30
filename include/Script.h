@@ -3,6 +3,7 @@
 
 #include <string>
 #include <Dictionary.h>
+#include <map>
 #include <vector>
 #include <tuple>
 #include <iostream>
@@ -10,6 +11,10 @@
 using namespace std;
 
 class Array;
+class Script;
+class Operator;
+
+static map<string, vector<tuple<string, string, Operator*>>> operators;
 
 class Script
 {
@@ -36,10 +41,9 @@ class Script
 
         Script * GetVariable(string val);
 
-
+        static void copy(Script * s1, Script * s2);
     protected:
         Script * parent = nullptr;
-        Dictionary<string, Script*> operators;
         Dictionary<string, Script*> vars;
         string type;
     private:
@@ -81,10 +85,26 @@ class Array : public Script
         ~Array();
         Script * Execute(Script & parameter);
         static string TypeName;
-
         string GetValue() override;
     protected:
     private:
 };
+
+class Operator : Script
+{
+public:
+    //Operator(Script* (* func)(Array * params));
+    Operator(Script* (* func)(Script * p1, Script * p2));
+    //Script * Execute(Array * params);
+    Script * Execute(Script * p1, Script * p2);
+
+protected:
+    Script * (* func) (Script * p1, Script * p2);
+
+};
+
+void InitOperators();
+
+map<string, vector<tuple<string, string, Operator*>>> GetOperator();
 
 #endif // SCRIPT_H

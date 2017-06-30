@@ -44,6 +44,7 @@ class Dictionary
             for(typename vector<pair<KeyType, ValueType>>::iterator it = data.begin(); it != data.end(); it++)
                 func((*it).first, (*it).second);
         }
+
         void foreachReverse(void func(KeyType key, ValueType value))
         {
             for(typename vector<pair<KeyType, ValueType>>::reverse_iterator it = data.rbegin(); it != data.rend(); it++)
@@ -54,7 +55,6 @@ class Dictionary
         {
             for(typename vector<pair<KeyType, ValueType>>::iterator it = data.begin(); it != data.end(); it++)
                 if((*it).first == key) return (*it).second;
-
             return add(key);
         }
 

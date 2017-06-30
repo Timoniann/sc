@@ -122,6 +122,7 @@ void Handler(Script &script)
 
 int main(int argc, char ** argv)
 {
+    InitOperators();
     /*
     Dictionary<string, unsigned int> dic("Hello", 1);
     dic.add("Hello2", 2);

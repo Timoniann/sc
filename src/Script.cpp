@@ -56,8 +56,7 @@ public:
 
 Script::Script()
 {
-    operators["="] = new OpEqual(this);
-    operators[","] = new OpComma(this);
+
 }
 
 Script::Script(Script * parent)
@@ -209,6 +208,37 @@ void Script::process_op (vector<Script *> & st, string op)
     Script * r = st.back();  st.pop_back();
     Script * l = st.back();  st.pop_back();
 
+    auto operators = GetOperator();
+
+    cout << "Starting operation doing\n";
+    cout << l->GetValue() << "(" + l->GetType() + ")" << ", " << r->GetValue() << "(" + r->GetType() + ")" << "\n";
+    if(operators.count(op) > 0)
+    {
+        typedef vector<tuple<string, string, Operator*>> mass;
+        mass & t = operators[op];
+        for(mass::iterator it = t.begin(); it != t.end(); it++)
+        {
+            if(get<0>(*it) == l->GetType() && get<1>(*it) == r->GetType())
+                { st.push_back(get<2>(*it)->Execute(l, r)); return; }
+        }
+        cout << "Not default operator...\n";
+        for(mass::iterator it = t.begin(); it != t.end(); it++)
+        {
+            if(get<0>(*it) == l->GetType() && get<1>(*it) == "null")
+                { st.push_back(get<2>(*it)->Execute(l, r)); return; }
+        }
+        cout << "Not right null operator...\n";
+        for(mass::iterator it = t.begin(); it != t.end(); it++)
+        {
+            if(get<0>(*it) == "null" && get<1>(*it) == "null")
+                { st.push_back(get<2>(*it)->Execute(l, r)); return; }
+        }
+        cout << op << "// Not have defaulting operators for this... (" << l->GetType() << " " << op << " " << r->GetType() << ")\n";
+
+    }
+    else cout << "Not have operator '" << op << "' (" << operators.size() << " - size)\n";
+    //if();
+    /*
     if(l->operators.count(op) > 0)
     {
         Script * result = (l->operators[op]->Execute(*r));
@@ -216,7 +246,7 @@ void Script::process_op (vector<Script *> & st, string op)
         st.push_back(result);
         return;
     }
-    Log("Operator '" + op + "' not declared in type '" + l->GetType() + "'", 5);
+    Log("Operator '" + op + "' not declared in type '" + l->GetType() + "'", 5);*/
     st.push_back(new Script(nullptr, "null", ""));
 
 }
@@ -245,13 +275,20 @@ string Script::GetType()
     return type;
 }
 
+void Script::copy(Script * s1, Script * s2)
+{
+    s1->SetValue(s2->GetValue());
+    s1->type = s2->type;
+    s1->vars = s2->vars;
+}
+
 /// ----------------------SCRIPT
 /// INT ------------------------
 
-class Operator : public Script
+class OperatorPlus : public Script
 {
 public:
-    Operator(Script * parent) : Script(parent)
+    OperatorPlus(Script * parent) : Script(parent)
     {
 
     }
@@ -274,7 +311,6 @@ Int::Int(string val) : Script()
     cout << "New int (" << val << ")\n";
     this->type = "int";
     SetValue(val);
-    operators["+"] = new Operator(this);
 }
 
 Int::~Int()
@@ -312,8 +348,6 @@ Bool::Bool(string val) : Script()
     if(val == "" || val == "false" || val == "0")
         SetValue("false");
     else SetValue("true");
-
-    operators["=="] = new OpEquals(this);
 }
 
 Bool::~Bool()
@@ -366,5 +400,41 @@ string Array::GetValue()
     return result;
 }
 
+/// ----------------------- ARRAY
+/// OPERATOR --------------------
+
+Operator::Operator(Script* (* func)(Script * p1, Script * p2))
+{
+    this->func = func;
+}
+
+Script * Operator::Execute(Script * p1, Script * p2)
+{
+    return func(p1, p2);
+}
 
 //Dictionary<string, Script*> Script::operators;
+Script * Plus(Script * p1, Script * p2)
+{
+    return new Int(to_string(stoi(p1->GetValue()) + stoi(p2->GetValue())));
+}
+
+Script * Assign(Script * p1, Script * p2)
+{
+    //delete *p1;
+
+    Script::copy(p1, p2);
+    //*p1 = *p2;
+    return p1;
+}
+
+void InitOperators()
+{
+    operators["+"].push_back(make_tuple("int", "int", new Operator(Plus)));
+    operators["="].push_back(make_tuple("null", "null", new Operator(Assign)));
+}
+
+map<string, vector<tuple<string, string, Operator*>>> GetOperator()
+{
+    return operators;
+}
