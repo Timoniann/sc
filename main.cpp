@@ -34,24 +34,6 @@ string GetDigit(string & data, unsigned int & i)
     return result;
 }
 
-string GetString(string & data, unsigned int & i)
-{
-    if(!In(data[i], "'\"")) { Log((string)"GET STRING NOT STRING!!!", 1); return ""; }
-    char parser = data[i];
-    string str;
-    i++;
-    while(i < data.size())
-    {
-        str += data[i];
-        i++;
-        if (data[i] == '\\') { i+=2; continue; }
-        if (data[i] == parser){ i++; return str; }
-    }
-    Log("Syntax GetString error", 2);
-    return str;
-}
-
-
 void ReadCommand(Script * script, string & data, unsigned int & iter)
 {
     cout << "Reading...\n";

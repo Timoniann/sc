@@ -31,4 +31,6 @@ vector<string> getOperators();
 
 int priority (string op);
 
+string GetString(string & data, unsigned int & i);
+
 #endif // BASIC_H_INCLUDED

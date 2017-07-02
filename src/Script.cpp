@@ -7,6 +7,7 @@
 #define ORDER_PUSH_VAL 3
 #define ORDER_PUSH_OP 4
 #define ORDER_PUSH_PARAM 5
+#define ORDER_PUSH_STR 6
 
 Script * _global;
 /// SCRIPT -----------------------------------
@@ -71,7 +72,8 @@ Script::Script(vector<string> & strs) : Script()
             else {
                 if(strs[i][j] == '\'' || strs[i][j] == '"')
                 {
-
+                    triple.push_back(make_tuple(ORDER_PUSH_STR, GetString(strs[i], j), i));
+                    j--;
                     continue;
                 }
                 while(j < strs[i].size() && !isalnum(strs[i][j]) && !delim(strs[i][j]))
@@ -133,6 +135,12 @@ Script * Script::Execute(vector<Script*> & parameters)
                 }
                 break;
             case ORDER_PUSH_PARAM:
+                break;
+            case ORDER_PUSH_STR:
+                {
+                    string val = get<1>(t);
+                    st.push_back(_global->funcs["string"]->Execute(val));
+                }
                 break;
             default:
                 cout << "Invalid order\n";
@@ -330,7 +338,10 @@ Script * IntConstructor(Script * self, Script * params)
 
 Script * StringConstructor(Script * self, Script * params)
 {
-    return new Script(params->parent, "string", params->GetValue());
+    Script * newStr = new Script();
+    Script::copy(newStr, self);
+    newStr->SetValue(params->GetValue());
+    return newStr;
 }
 
 Script * ArrayConstructor(Script * self, Script * params)
@@ -346,6 +357,7 @@ Script * SizeConstructor(Script * self, Script * params)
     return new Script("int", to_string(self->parent->vars.size()));
 }
 
+/// ~Constructors
 
 string GetValue(Script * self)
 {
@@ -413,6 +425,7 @@ void Scripting(Script * global)
 
     Script * _string = new Script("string", "");
         _string->SetConstructor(StringConstructor);
+        _string->funcs.add("ToString", IntToString);
     global->funcs.add("string", _string);
 
 
