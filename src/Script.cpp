@@ -16,19 +16,20 @@ Script::Script()
 
 }
 
-Script::Script(Script * parent)
+Script::Script(Script * parent) : Script()
 {
     this->parent = parent;
 }
 
-Script::Script(Script * parent, string type, string value) : Script()
+Script::Script(Script * parent, string type, string value, bool standart)
 {
     this->parent = parent;
     this->type = type;
     this->value = value;
+    if (standart) Script();
 }
 
-Script::Script(vector<string> & strs)
+Script::Script(vector<string> & strs) : Script()
 {
     vector<Script *> st;
     vector<tuple<unsigned int, string, int>> triple;
@@ -80,16 +81,30 @@ Script::Script(vector<string> & strs)
     }
 }
 
-Script::Script(string type, string value)
+Script::Script(string type, string value) : Script()
 {
     this->type = type;
     this->value = value;
 }
 
+
+Script * defaultToString(Script * self, Script * params)
+{
+    cout << self->parent->GetValue() << "\n";
+    return _global->funcs["string"]->Execute(*self->parent);
+}
+
+
 Script * Script::Execute(vector<Script*> & parameters)
 {
+    //Script * df = new Script(this, "func", "ToString", false);
+    //df->SetConstructor(defaultToString);
+    //funcs.add("ToString", df);
+
+
     if(constructor != nullptr)
         return constructor(this, parameters.size() == 0 ? new Script("null", "") : parameters[0]);
+
     for(int i = 0; i < cmds.size(); i++)
     {
         vector<tuple<unsigned int, string, int>> cmd = cmds[i];
@@ -111,7 +126,7 @@ Script * Script::Execute(vector<Script*> & parameters)
             case ORDER_PUSH_VAL:
                 {
                     string val = get<1>(t);
-                    if(isdigit(val[0])) { cout << val << " - digin\n"; st.push_back(_global->funcs["int"]->Execute(val)); }
+                    if(isdigit(val[0])) st.push_back(_global->funcs["int"]->Execute(val));
                     else st.push_back(GetVariable(val));
                 }
             break;
@@ -172,20 +187,26 @@ string Script::StackVariables()
     result = result + "Count: " + to_string(vars.size()) + "\n";
 
     for(pair<string, Script*> p : vars)
-        if(p.second != nullptr)
-        result += p.first + " = " + p.second->GetValue() + " (" + p.second->GetType() + ")\n";
+        if(p.second != nullptr){
+                cout << "funcs => " << p.second->funcs.size() << "\n";
+                Script * toS = p.second->funcs["ToString"];
+            if(toS != nullptr)
+                result += p.first + " = " + toS->Execute(*p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
+                else cout << "toS nullptr";
+        }
 
     return result;
 }
 
 void Script::process_op (vector<Script *> & st, string op)
 {
+
     Script * r = st.back();  st.pop_back();
     Script * l = st.back();  st.pop_back();
 
     auto operators = GetOperator();
 
-    cout << l->GetValue() << "(" + l->GetType() + ")" << ", " << r->GetValue() << "(" + r->GetType() + ")" << "\n";
+    cout << l->GetValue() << "(" + l->GetType() + ") " << op + " " << r->GetValue() << "(" + r->GetType() + ")" << "\n";
     if(operators.count(op) > 0)
     {
         typedef vector<tuple<string, string, Operator*>> mass;
@@ -244,6 +265,7 @@ void Script::copy(Script * s1, Script * s2)
     s1->SetValue(s2->GetValue());
     s1->type = s2->type;
     s1->vars = s2->vars;
+    s1->funcs = s2->funcs;
 }
 
 /// ----------------------SCRIPT
@@ -293,24 +315,29 @@ Script * ArrayPlus(Script * p1, Script * p2)
     return p1;
 }
 
+
+/// Constructors
+
+
 Script * IntConstructor(Script * self, Script * params)
 {
-    if(params->GetValue() == "") {
-        if(params->vars.size() != 0)
-        {
-            cout << params->vars.size() << " - size "; self->SetValue(params->vars[0]->GetValue());
-            return self;
-        }
-        else
-        {
-            self->SetValue("0");
-            return self;
-        }
+    try{
+        Script * newInt = new Script();
+        Script::copy(newInt, self);
+        newInt->SetValue(to_string(stoi(params->GetValue())));
+        return newInt;
+    } catch(exception e)
+    {
+        Log("Can't parsing to int");
+        return new Script("int", "0");
     }
-    self->SetValue(params->GetValue());
-    cout << "Int constructor\n";
-    return self;
 }
+
+Script * StringConstructor(Script * self, Script * params)
+{
+    return new Script(params->parent, "string", params->GetValue());
+}
+
 
 Script * ArrayConstructor(Script * self, Script * params)
 {
@@ -350,18 +377,33 @@ map<string, vector<tuple<string, string, Operator*>>> GetOperator()
     return operators;
 }
 
+Script * ToString(Script * self, Script * params)
+{
+    return _global->funcs["string"]->Execute(*params);
+}
+
 void Scripting(Script * global)
 {
 
     Script * _int = new Script("int", "0");
         _int->SetConstructor(IntConstructor);
+            Script * IntToString = new Script(_int);
+            IntToString->SetConstructor(ToString);
+        _int->funcs.add("ToString", IntToString);
     global->funcs.add("int", _int);
-        Script * _array = new Script("array", "[]");
+
+    Script * _array = new Script("array", "[]");
         _array->SetConstructor(ArrayConstructor);
             Script * sizeFunc = new Script(_array);
             sizeFunc->SetConstructor(SizeConstructor);
         _array->funcs.add("size", sizeFunc);
     global->funcs.add("array", _array);
+
+    Script * _string = new Script("string", "");
+        _string->SetConstructor(StringConstructor);
+    global->funcs.add("string", _string);
+
+
 
     _global = global;
 

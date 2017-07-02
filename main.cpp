@@ -139,6 +139,5 @@ int main(int argc, char ** argv)
         Handler(*s);
     }
     cout << "Closed\n";
-    system("pause");
     return 0;
 }

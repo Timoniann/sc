@@ -26,7 +26,7 @@ class Script
         Script();
         Script(vector<string> & strs);
         Script(string type, string value);
-        Script(Script * parent, string type, string value);
+        Script(Script * parent, string type, string value, bool standart = true);
         Script(Script * parent);
 
         virtual Script * Execute(vector<Script*> & parameters);
@@ -45,10 +45,9 @@ class Script
 
         static void copy(Script * s1, Script * s2);
 
-
+        string type;
     protected:
 
-        string type;
         Script * (* constructor) (Script * self, Script * params) = nullptr;
     private:
         vector<vector<tuple<unsigned int, string, int>>> cmds;
