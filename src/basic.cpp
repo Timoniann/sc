@@ -19,12 +19,12 @@ bool In(char value, char * values)
 
 bool In(string & value, vector<string> & values)
 {
-    for(int i = 0; i < values.size(); i++)
+    for(unsigned int i = 0; i < values.size(); i++)
         if(values[i] == value) return true;
     return false;
 }
 
-string GetWord(string & data, int & i)
+string GetWord(string & data, unsigned int & i)
 {
     string word;
     while(i < data.size())

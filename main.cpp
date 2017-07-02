@@ -4,7 +4,7 @@
 #include <Script.h>
 #include <basic.h>
 
-void ClearSpaces(string & str, int position = 0)
+void ClearSpaces(string & str, unsigned int position = 0)
 {
     while(position < str.size())
     {
@@ -16,7 +16,7 @@ void ClearSpaces(string & str, int position = 0)
     }
 }
 
-string GetDigit(string & data, int & i)
+string GetDigit(string & data, unsigned int & i)
 {
     string result = "";
     bool p = false;
@@ -34,9 +34,9 @@ string GetDigit(string & data, int & i)
     return result;
 }
 
-string GetString(string & data, int & i)
+string GetString(string & data, unsigned int & i)
 {
-    if(!In(data[i], "'\"")) { Log("GET STRING NOT STRING!!!", 1); return ""; }
+    if(!In(data[i], "'\"")) { Log((string)"GET STRING NOT STRING!!!", 1); return ""; }
     char parser = data[i];
     string str;
     i++;
@@ -52,7 +52,7 @@ string GetString(string & data, int & i)
 }
 
 
-void ReadCommand(Script * script, string & data, int & iter)
+void ReadCommand(Script * script, string & data, unsigned int & iter)
 {
     cout << "Reading...\n";
     ClearSpaces(data, iter);
@@ -67,7 +67,7 @@ void ReadCommand(Script * script, string & data, int & iter)
     ClearSpaces(data, iter);
     ///READING VALUE
     string value;
-    if (In(data[iter], "'\"")) value = GetString(data, iter);
+    if (In(data[iter], (char*)"'\"")) value = GetString(data, iter);
     else if (data[iter] == '-' || isdigit(data[iter])) value = GetDigit(data, iter);
     else value = GetWord(data, iter);
     //script->AddVar(name, value);
@@ -82,12 +82,10 @@ Script * ReadScript(char * file_path)
 {
     ifstream file(file_path);
     string str;
-    uint32_t line_current;
     vector<string> strs;
     while(getline(file, str))
     {
         strs.push_back(str);
-        int iter = 0;
     }
     Script * script = new Script(strs);
     return script;
@@ -104,7 +102,6 @@ void Handler(Script &script)
     Log("\nHandle........................................\n");
     string cmd;
     char str[256];
-    int t = 0;
 
     vector<Script*> p;
     Scripting(&script);
@@ -112,7 +109,6 @@ void Handler(Script &script)
     cout << "You can write 'exit' or other script's commands ('all')\n";
     while(true)
     {
-        t = 0;
         ZeroMemory(str, 256);
         cin.getline(str, 256);
         cmd = str;

@@ -4,7 +4,6 @@
 #include <string>
 #include <Dictionary.h>
 #include <map>
-#include <vector>
 #include <tuple>
 #include <iostream>
 
@@ -70,8 +69,6 @@ protected:
 };
 
 void InitOperators();
-
-map<string, vector<tuple<string, string, Operator*>>> GetOperator();
 
 void Scripting(Script * global);
 

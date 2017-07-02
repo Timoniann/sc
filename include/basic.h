@@ -21,7 +21,7 @@ bool In(char value, char * values);
 
 bool In(string & value, vector<string> & values);
 
-string GetWord(string & data, int & i);
+string GetWord(string & data, unsigned int & i);
 
 void Init();
 

@@ -69,6 +69,11 @@ Script::Script(vector<string> & strs) : Script()
                 }
             }
             else {
+                if(strs[i][j] == '\'' || strs[i][j] == '"')
+                {
+
+                    continue;
+                }
                 while(j < strs[i].size() && !isalnum(strs[i][j]) && !delim(strs[i][j]))
                     operand += strs[i][j++];
                 vector<string> opes = getOperators();
@@ -87,31 +92,18 @@ Script::Script(string type, string value) : Script()
     this->value = value;
 }
 
-
-Script * defaultToString(Script * self, Script * params)
-{
-    cout << self->parent->GetValue() << "\n";
-    return _global->funcs["string"]->Execute(*self->parent);
-}
-
-
 Script * Script::Execute(vector<Script*> & parameters)
 {
-    //Script * df = new Script(this, "func", "ToString", false);
-    //df->SetConstructor(defaultToString);
-    //funcs.add("ToString", df);
-
-
     if(constructor != nullptr)
         return constructor(this, parameters.size() == 0 ? new Script("null", "") : parameters[0]);
 
-    for(int i = 0; i < cmds.size(); i++)
+    for(unsigned int i = 0; i < cmds.size(); i++)
     {
         vector<tuple<unsigned int, string, int>> cmd = cmds[i];
         vector<Script *> st;
         vector<string> op;
         string newValue = "";
-        for(int j = 0; j < cmd.size(); j++)
+        for(unsigned int j = 0; j < cmd.size(); j++)
         {
             auto t = cmd[j];
             switch(std::get<0>(t))
@@ -178,8 +170,6 @@ void Script::AddVar(string name, Script * value)
     vars[name] = value;
 }
 
-Hand(string s){}
-
 string Script::StackVariables()
 {
     string result;
@@ -188,11 +178,10 @@ string Script::StackVariables()
 
     for(pair<string, Script*> p : vars)
         if(p.second != nullptr){
-                cout << "funcs => " << p.second->funcs.size() << "\n";
                 Script * toS = p.second->funcs["ToString"];
             if(toS != nullptr)
                 result += p.first + " = " + toS->Execute(*p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
-                else cout << "toS nullptr";
+                else Log("ToString() is not defined in type '" + p.second->GetType() + "'");
         }
 
     return result;
@@ -204,9 +193,6 @@ void Script::process_op (vector<Script *> & st, string op)
     Script * r = st.back();  st.pop_back();
     Script * l = st.back();  st.pop_back();
 
-    auto operators = GetOperator();
-
-    cout << l->GetValue() << "(" + l->GetType() + ") " << op + " " << r->GetValue() << "(" + r->GetType() + ")" << "\n";
     if(operators.count(op) > 0)
     {
         typedef vector<tuple<string, string, Operator*>> mass;
@@ -240,10 +226,8 @@ Script * Script::GetVariable(string val)
 {
     if(vars.count(val)) return vars[val];
     AddVar(val, new Script(this, "null", ""));
-    //cout << "New variable\n";
     return vars[val];
 }
-
 
 string Script::GetValue()
 {
@@ -283,6 +267,16 @@ Script * Operator::Execute(Script * p1, Script * p2)
 
 //Dictionary<string, Script*> Script::operators;
 
+Script * Minus(Script * p1, Script * p2)
+{
+    return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) - stoi(p2->GetValue())));
+}
+
+Script * Divide(Script * p1, Script * p2)
+{
+    return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) / stoi(p2->GetValue())));
+}
+
 Script * Plus(Script * p1, Script * p2)
 {
     return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) + stoi(p2->GetValue())));
@@ -302,17 +296,18 @@ Script * Multi(Script * p1, Script * p2)
 
 Script * Comma(Script * p1, Script * p2)
 {
-    Script * result = _global->funcs["array"]->Execute("Array");
-    result->vars.add(p1);
-    result->vars.add(p2);
+    Script * result = _global->funcs["array"]->Execute("Array throw comma");
+    result->vars.add((Script *)p1);
+    result->vars.add((Script *)p2);
     return result;
 }
 
 Script * ArrayPlus(Script * p1, Script * p2)
 {
-    cout << "ARRAY + \n";
-    p1->AddVar("23", p2);
-    return p1;
+    Script * result = new Script();
+    *result = *p1;
+    result->vars.add(p2);
+    return result;
 }
 
 
@@ -338,12 +333,12 @@ Script * StringConstructor(Script * self, Script * params)
     return new Script(params->parent, "string", params->GetValue());
 }
 
-
 Script * ArrayConstructor(Script * self, Script * params)
 {
-    self->SetValue(params->GetValue());
-    cout << "Array constructor\n";
-    return self;
+    Script * newArray = new Script();
+    Script::copy(newArray, self);
+    newArray->vars = params->vars;
+    return newArray;
 }
 
 Script * SizeConstructor(Script * self, Script * params)
@@ -355,7 +350,7 @@ Script * SizeConstructor(Script * self, Script * params)
 string GetValue(Script * self)
 {
     string result = "Array(";
-    for(int i = 0; i < self->vars.size(); i++)
+    for(unsigned int i = 0; i < self->vars.size(); i++)
         result += self->vars[i]->GetValue() + ", ";
     if(result.size() > 0) { result.pop_back(); result.pop_back(); }
     result += ")";
@@ -364,22 +359,36 @@ string GetValue(Script * self)
 
 void InitOperators()
 {
-    operators["+"].push_back(make_tuple("int", "int", new Operator(Plus)));
     operators["="].push_back(make_tuple("null", "null", new Operator(Assign)));
-    operators["*"].push_back(make_tuple("int", "int", new Operator(Multi)));
     operators[","].push_back(make_tuple("null", "null", new Operator(Comma)));
+
+    operators["+"].push_back(make_tuple("int", "int", new Operator(Plus)));
+    operators["*"].push_back(make_tuple("int", "int", new Operator(Multi)));
+    operators["-"].push_back(make_tuple("int", "int", new Operator(Minus)));
+    operators["/"].push_back(make_tuple("int", "int", new Operator(Divide)));
+
     operators["+"].push_back(make_tuple("array", "null", new Operator(ArrayPlus)));
 
 }
 
-map<string, vector<tuple<string, string, Operator*>>> GetOperator()
-{
-    return operators;
-}
-
-Script * ToString(Script * self, Script * params)
+Script * IntegerToString(Script * self, Script * params)
 {
     return _global->funcs["string"]->Execute(*params);
+}
+
+Script * ArrayToString(Script * self, Script * params)
+{
+    Script * str = _global->funcs["string"]->Execute(*self);
+    string val = "[";
+    function<void(string, Script *)>f = [&val](string key, Script * value)
+    {
+        val += value->funcs["ToString"]->Execute(*value)->GetValue() + ", ";
+    };
+    params->vars.foreach(f);
+    if (params->vars.size()) val.pop_back(), val.pop_back();
+    val += ']';
+    str->SetValue(val);
+    return str;
 }
 
 void Scripting(Script * global)
@@ -388,8 +397,8 @@ void Scripting(Script * global)
     Script * _int = new Script("int", "0");
         _int->SetConstructor(IntConstructor);
             Script * IntToString = new Script(_int);
-            IntToString->SetConstructor(ToString);
-        _int->funcs.add("ToString", IntToString);
+            IntToString->SetConstructor(IntegerToString);
+        _int->funcs["ToString"] = IntToString;
     global->funcs.add("int", _int);
 
     Script * _array = new Script("array", "[]");
@@ -397,6 +406,9 @@ void Scripting(Script * global)
             Script * sizeFunc = new Script(_array);
             sizeFunc->SetConstructor(SizeConstructor);
         _array->funcs.add("size", sizeFunc);
+            Script * arrToString = new Script(_array);
+            arrToString->SetConstructor(ArrayToString);
+        _array->funcs.add("ToString", arrToString);
     global->funcs.add("array", _array);
 
     Script * _string = new Script("string", "");

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <iterator>
+#include <functional>
 
 using namespace std;
 
@@ -32,20 +33,23 @@ class Dictionary
         ValueType & add(ValueType value)
         {
             data.push_back(make_pair("", value));
+            return data.back().second;
         }
 
         ValueType & push_back(ValueType value)
         {
             data.push_back(make_pair("", value));
+            return data.back().second;
         }
 
-        void foreach(void func(KeyType key, ValueType value))
+
+        void foreach(function<void(KeyType key, ValueType value)>func)
         {
             for(typename vector<pair<KeyType, ValueType>>::iterator it = data.begin(); it != data.end(); it++)
                 func((*it).first, (*it).second);
         }
 
-        void foreachReverse(void func(KeyType key, ValueType value))
+        void foreachReverse(function<void(KeyType key, ValueType value)>func)
         {
             for(typename vector<pair<KeyType, ValueType>>::reverse_iterator it = data.rbegin(); it != data.rend(); it++)
                 func((*it).first, (*it).second);
