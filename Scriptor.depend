@@ -72,23 +72,23 @@
 	<basic.h>
 	<windows.h>
 
-1499008994 e:\projects\c++\sc\include\script.h
+1499114494 e:\projects\c++\sc\include\script.h
 	<string>
 	<Dictionary.h>
 	<map>
 	<tuple>
 	<iostream>
 
-1498996632 e:\projects\c++\sc\include\basic.h
+1499111622 e:\projects\c++\sc\include\basic.h
 	<string>
 	<cstring>
 	<vector>
 	<iostream>
 
-1499026341 source:e:\projects\c++\sc\src\basic.cpp
+1499118082 source:e:\projects\c++\sc\src\basic.cpp
 	<basic.h>
 
-1499105422 source:e:\projects\c++\sc\src\script.cpp
+1499117945 source:e:\projects\c++\sc\src\script.cpp
 	"Script.h"
 	<basic.h>
 	<algorithm>

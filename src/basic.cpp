@@ -92,3 +92,24 @@ string GetString(string & data, unsigned int & i)
     cout << "Str: " << str << "\n";
     return str;
 }
+
+string readNumber(string & str, unsigned int & iter)
+{
+    string result = "";
+    while(iter < str.size())
+        if(isdigit(str[iter])) result += str[iter++];
+        else { iter--; return result; }
+    iter--;
+    return result;
+}
+
+string readWord(string & str, unsigned int & iter)
+{
+    string result = "";
+    while(isalnum(str[iter]) && iter < str.size()){
+        result += str[iter];
+        iter++;
+    }
+    iter--;
+    return result;
+}

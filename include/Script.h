@@ -27,10 +27,12 @@ class Script
         Script(string type, string value);
         Script(Script * parent, string type, string value, bool standart = true);
         Script(Script * parent);
+        Script(vector<string> & strs, int a);
 
         virtual Script * Execute(vector<Script*> & parameters);
         virtual Script * Execute(Script & parameter);
         virtual Script * Execute(string param);
+                Script * Execute(vector<Script*> & parameters, int a);
         virtual string GetValue();
 
         void SetConstructor(Script* (* func)(Script * self, Script * params));
@@ -49,7 +51,7 @@ class Script
 
         Script * (* constructor) (Script * self, Script * params) = nullptr;
     private:
-        vector<vector<tuple<unsigned int, string, int>>> cmds;
+        vector<vector<tuple<unsigned int, string, unsigned int>>> cmds;
         //Dictionary<string, Script> operators;
         //make_tuple(COMMAND_ID, "variable", "values");
         vector<string> params;

@@ -2,37 +2,24 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Debug" />
-	<File name="main.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="333" topLine="7" />
-		</Cursor>
-		<Folding>
-			<Collapse line="29" />
-		</Folding>
-	</File>
-	<File name="src\Script.cpp" open="1" top="1" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="5541" topLine="141" />
-		</Cursor>
-		<Folding>
-			<Collapse line="16" />
-			<Collapse line="21" />
-			<Collapse line="26" />
-		</Folding>
-	</File>
 	<File name="include\basic.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="634" topLine="12" />
+			<Cursor1 position="636" topLine="17" />
 		</Cursor>
 	</File>
 	<File name="src\basic.cpp" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1373" topLine="46" />
+			<Cursor1 position="2315" topLine="49" />
 		</Cursor>
 		<Folding>
 			<Collapse line="3" />
 			<Collapse line="7" />
 			<Collapse line="12" />
+			<Collapse line="20" />
+			<Collapse line="27" />
+			<Collapse line="40" />
+			<Collapse line="44" />
+			<Collapse line="49" />
 		</Folding>
 	</File>
 	<File name="include\Dictionary.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -42,7 +29,54 @@
 	</File>
 	<File name="include\Script.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="771" topLine="22" />
+			<Cursor1 position="197" topLine="13" />
 		</Cursor>
+	</File>
+	<File name="main.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2470" topLine="79" />
+		</Cursor>
+		<Folding>
+			<Collapse line="29" />
+		</Folding>
+	</File>
+	<File name="src\Script.cpp" open="1" top="1" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5339" topLine="74" />
+		</Cursor>
+		<Folding>
+			<Collapse line="23" />
+			<Collapse line="28" />
+			<Collapse line="33" />
+			<Collapse line="41" />
+			<Collapse line="136" />
+			<Collapse line="142" />
+			<Collapse line="169" />
+			<Collapse line="307" />
+			<Collapse line="383" />
+			<Collapse line="390" />
+			<Collapse line="396" />
+			<Collapse line="401" />
+			<Collapse line="407" />
+			<Collapse line="424" />
+			<Collapse line="466" />
+			<Collapse line="471" />
+			<Collapse line="476" />
+			<Collapse line="481" />
+			<Collapse line="492" />
+			<Collapse line="497" />
+			<Collapse line="504" />
+			<Collapse line="509" />
+			<Collapse line="514" />
+			<Collapse line="519" />
+			<Collapse line="526" />
+			<Collapse line="531" />
+			<Collapse line="539" />
+			<Collapse line="587" />
+			<Collapse line="594" />
+			<Collapse line="604" />
+			<Collapse line="618" />
+			<Collapse line="623" />
+		</Folding>
 	</File>
 </CodeBlocks_layout_file>
