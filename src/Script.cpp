@@ -8,6 +8,8 @@
 #define ORDER_PUSH_OP 4
 #define ORDER_PUSH_PARAM 5
 #define ORDER_PUSH_STR 6
+#define ORDED_PUSH_FUNC 7
+#define ORDER_PUSH_POINTER 8
 
 Script * _global;
 /// SCRIPT -----------------------------------
@@ -32,6 +34,7 @@ Script::Script(Script * parent, string type, string value, bool standart)
 
 Script::Script(vector<string> & strs) : Script()
 {
+    bool currentIsOp = false;
     vector<Script *> st;
     vector<tuple<unsigned int, string, int>> triple;
     for(unsigned int i = 0; i < strs.size(); i++)
@@ -49,40 +52,48 @@ Script::Script(vector<string> & strs) : Script()
             if(isalnum(c)){
                 while(j < strs[i].size() && isalnum(strs[i][j]))
                     operand += strs[i][j++];
+                j--;
                 vector<string> stats = getStatics();
                 if(In(operand, stats))
                     triple.push_back(make_tuple(ORDER_CREATE, operand, i));
                 else if(isdigit(operand[0]))
                     triple.push_back(make_tuple(ORDER_PUSH_VAL, operand, i));
-                else if(strs[i][j] == '.' || strs[i][j] == '('){
-                        vector<Script*> ps;
-                        while(strs[i][j] != ')')
-                        {
-                            j++;
-                        }
+                else {
+                    while(In(strs[i][j++], spaces));
+                    if(strs[i][j] == '('){
+                       triple.push_back(make_tuple(ORDED_PUSH_FUNC, operand, i));
+                       j++;
                     }
-                else
-                    triple.push_back(make_tuple(ORDER_PUSH_VAL, operand, i));
-                if(strs[i][j] == ';') if(triple.size() > 0){
+                    else{
+                        j--;
+                        triple.push_back(make_tuple(ORDER_PUSH_VAL, operand, i));
+                    }
+                }
+
+                if(strs[i][j] == ';' && triple.size() > 0){
                     cmds.push_back(triple);
                     triple.clear();
                     continue;
                 }
             }
             else {
-                if(strs[i][j] == '\'' || strs[i][j] == '"')
+
+                if(c == '\'' || c == '"')
                 {
                     triple.push_back(make_tuple(ORDER_PUSH_STR, GetString(strs[i], j), i));
                     j--;
                     continue;
                 }
-                while(j < strs[i].size() && !isalnum(strs[i][j]) && !delim(strs[i][j]))
+                //else if (c == '(' || c == ')')
+                    ;//triple.push_back(make_tuple(ORDER_PUSH_, "", i));
+                while(j < strs[i].size() && !isalnum(strs[i][j]) && !delim(strs[i][j]) && strs[i][j] != ';')
                     operand += strs[i][j++];
+                j--;
                 vector<string> opes = getOperators();
                 if(In(operand, opes)){
                     triple.push_back(make_tuple(ORDER_PUSH_OP, operand, i));
                 }
-                else Log("Operator " + operand + " not found.\n", 4);
+                else Log("Operator '" + operand + "' not found.\n", 4);
             }
         }
     }
@@ -104,6 +115,7 @@ Script * Script::Execute(vector<Script*> & parameters)
         vector<tuple<unsigned int, string, int>> cmd = cmds[i];
         vector<Script *> st;
         vector<string> op;
+        vector<string> pointers;
         string newValue = "";
         for(unsigned int j = 0; j < cmd.size(); j++)
         {
@@ -118,29 +130,44 @@ Script * Script::Execute(vector<Script*> & parameters)
                 //funcs[get<1>(t)]->Execute(get<2>(t));
                 break;
             case ORDER_PUSH_VAL:
-                {
-                    string val = get<1>(t);
-                    if(isdigit(val[0])) st.push_back(_global->funcs["int"]->Execute(val));
-                    else st.push_back(GetVariable(val));
-                }
+            {
+                string val = get<1>(t);
+                if(isdigit(val[0])) st.push_back(_global->funcs["int"]->Execute(val));
+                else st.push_back(GetVariable(val));
+            }
             break;
             case ORDER_PUSH_OP:
                 {
                     string oper = get<1>(t);
-                    while (!op.empty() && priority(op.back()) >= priority(oper))
-                        process_op(st,
-                                   op.back()),
-                                   op.pop_back();
-                    op.push_back (oper);
+                    if(oper == "(") { op.push_back (oper); }
+                    else if (oper == ")") {
+                        while (op.back() != "("){
+                            process_op (st, op.back());
+                            op.pop_back();
+                        }
+                        op.pop_back();
+                    }
+                    else {
+                        while (!op.empty() && priority(op.back()) >= priority(oper)){
+                            cout << op.back();
+                            process_op(st, op.back()), op.pop_back();
+                        }
+                        op.push_back (oper);
+                    }
                 }
+                break;
+            case ORDER_PUSH_POINTER:
+                pointers.push_back(get<1>(t));
                 break;
             case ORDER_PUSH_PARAM:
                 break;
             case ORDER_PUSH_STR:
-                {
-                    string val = get<1>(t);
-                    st.push_back(_global->funcs["string"]->Execute(val));
-                }
+                st.push_back(_global->funcs["string"]->Execute(get<1>(t)));
+                break;
+            case ORDED_PUSH_FUNC:
+                if(funcs.count(get<1>(t)))
+                    funcs[get<1>(t)]->Execute("");
+                else Log("This object not have function '" + get<1>(t) + "'");
                 break;
             default:
                 cout << "Invalid order\n";
@@ -223,7 +250,7 @@ void Script::process_op (vector<Script *> & st, string op)
                 { st.push_back(get<2>(*it)->Execute(l, r)); return; }
         }
     }
-    else cout << "Not have operator '" << op << "' (" << operators.size() << " - size)\n";
+    else cout << "Not have operator '" << op << "'\n";
 
     Log("Operator '" + op + "' not declared in type '" + l->GetType() + "'", 5);
     st.push_back(new Script(nullptr, "null", ""));
@@ -344,6 +371,12 @@ Script * StringConstructor(Script * self, Script * params)
     return newStr;
 }
 
+Script * CountC(Script * self, Script * params)
+{
+    cout << "Hello)\n";
+    return new Script("null", "null");
+}
+
 Script * ArrayConstructor(Script * self, Script * params)
 {
     Script * newArray = new Script();
@@ -428,6 +461,9 @@ void Scripting(Script * global)
         _string->funcs.add("ToString", IntToString);
     global->funcs.add("string", _string);
 
+        Script * _count = new Script("count", "CountString");
+        _count->SetConstructor(CountC);
+    global->funcs.add("count", _count);
 
 
     _global = global;

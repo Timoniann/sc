@@ -61,14 +61,17 @@ void Init()
     opers.push_back(">");
     opers.push_back("<");
     opers.push_back(",");
+    opers.push_back("(");
+    opers.push_back(")");
 }
 
 int priority (string op) {
     return
-        op == "," ? 0 :
-        op == "==" || op == "<" || op == ">" || op == "!=" ? 1 :
-        op == "+" || op == "-" ? 2 :
-        op == "*" || op == "/" || op == "%" ? 3 :
+        //op == "(" || ")" ? 5 :
+        op == "," ? 1 :
+        op == "==" || op == "<" || op == ">" || op == "!=" ? 2 :
+        op == "+" || op == "-" ? 3 :
+        op == "*" || op == "/" || op == "%" ? 4 :
         -1;
 }
 
@@ -85,6 +88,7 @@ string GetString(string & data, unsigned int & i)
         if (data[i] == '\\') { i+=2; continue; }
         if (data[i] == parser){ i++; return str; }
     }
-    Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\n'", 2);
+    Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\\n'", 2);
+    cout << "Str: " << str << "\n";
     return str;
 }
