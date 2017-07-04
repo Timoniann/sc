@@ -75,23 +75,6 @@ int priority (string op) {
         -1;
 }
 
-string GetString(string & data, unsigned int & i)
-{
-    if(!In(data[i], "'\"")) { Log((string)"GET STRING NOT STRING!!!", 1); return ""; }
-    char parser = data[i];
-    string str;
-    i++;
-    while(i < data.size())
-    {
-        str += data[i];
-        i++;
-        if (data[i] == '\\') { i+=2; continue; }
-        if (data[i] == parser){ i++; return str; }
-    }
-    Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\\n'", 2);
-    cout << "Str: " << str << "\n";
-    return str;
-}
 
 string readNumber(string & str, unsigned int & iter)
 {
@@ -112,4 +95,21 @@ string readWord(string & str, unsigned int & iter)
     }
     iter--;
     return result;
+}
+
+string readString(string & data, unsigned int & iter)
+{
+    if(!In(data[iter], "'\"")) { Log((string)"GET STRING NOT STRING!!!", 1); return ""; }
+    char parser = data[iter];
+    string str;
+    iter++;
+    while(iter < data.size())
+    {
+        str += data[iter++];
+        if (data[iter] == '\\') { str += data[iter++]; str += data[iter++]; continue; }
+        if (data[iter] == parser){ return str; }
+    }
+    Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\\n'", 2);
+    cout << "Str: " << str << "\n";
+    return str;
 }

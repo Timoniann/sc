@@ -5,4 +5,6 @@ c = b + a + 2 + 6 + a;
 r = 3;
 d = 4 , 2;
 q = d + 2;
+str = "This is the \nstring";
 count();
+cout("Hello, i am the Timoniann");

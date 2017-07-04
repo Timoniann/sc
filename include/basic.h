@@ -31,9 +31,8 @@ vector<string> getOperators();
 
 int priority (string op);
 
-string GetString(string & data, unsigned int & i);
-
 string readNumber(string & str, unsigned int & iter);
 string readWord(string & str, unsigned int & iter);
+string readString(string & data, unsigned int & iter);
 
 #endif // BASIC_H_INCLUDED

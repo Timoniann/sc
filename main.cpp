@@ -49,7 +49,7 @@ void ReadCommand(Script * script, string & data, unsigned int & iter)
     ClearSpaces(data, iter);
     ///READING VALUE
     string value;
-    if (In(data[iter], (char*)"'\"")) value = GetString(data, iter);
+    if (In(data[iter], (char*)"'\"")) value = readString(data, iter);
     else if (data[iter] == '-' || isdigit(data[iter])) value = GetDigit(data, iter);
     else value = GetWord(data, iter);
     //script->AddVar(name, value);
@@ -81,12 +81,13 @@ void ZeroMemory(char * str, int size)
 
 void Handler(Script &script)
 {
-    Log("\nHandle........................................\n");
     string cmd;
     char str[256];
 
     vector<Script*> p;
+    Log("\nHandle........................................\n");
     Scripting(&script);
+    Log("\nClosed........................................\n");
     //cout << "Exit with status: " << script.Execute(p)->GetValue() << "\n";
     cout << "You can write 'exit' or other script's commands ('all')\n";
     while(true)
@@ -136,9 +137,9 @@ void SetColor(int text, ConsoleColor background)
 
 int main(int argc, char ** argv)
 {
-    system("COLOR 8B");
+    system("COLOR 00");
     cout << "Hello, gigach\n";
-    SetColor(White, DarkGray);
+    SetColor(White, Black);
     InitOperators();
     /*
     Dictionary<string, unsigned int> dic("Hello", 1);
