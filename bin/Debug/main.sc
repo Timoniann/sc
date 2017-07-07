@@ -10,4 +10,5 @@ count();
 string = "Gaga" + "Kaka";
 s.d = "Pot";
 cout("Hello, i am the Timoniann");
-cout(1 + 2 * 10);
+arr = s.d , cout( 1 + 2 * 10 );
+t = a * 4 , 25;

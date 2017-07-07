@@ -8,7 +8,9 @@ void SetColor(int text, ConsoleColor background)
 
 void Log(string text, MESSAGE_TYPE msg_type, int error_code)
 {
-    SetColor(msg_type, White);
+    if(msg_type == MessagePlain)
+        SetColor(msg_type, White);
+    else SetColor(msg_type, Black);
     cout << text << "\n";
     SetColor(MessagePlain, White);
 }
@@ -76,7 +78,7 @@ void Init()
 int priority (string op) {
     return
         //op == "(" || ")" ? 5 :
-        op == "," ? -2 :
+        op == "," ? 1 :
         op == "==" || op == "<" || op == ">" || op == "!=" ? 2 :
         op == "+" || op == "-" ? 3 :
         op == "*" || op == "/" || op == "%" ? 4 :

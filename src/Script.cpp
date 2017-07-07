@@ -581,7 +581,8 @@ Script * ArrayToString(Script * self, Script * params)
     string val = "[";
     function<void(string, Script *)>f = [&val](string key, Script * value)
     {
-        val += value->funcs["ToString"]->Execute(*value)->GetValue() + ", ";
+        if(value->funcs.count("ToString"))
+            val += value->funcs["ToString"]->Execute(*value)->GetValue() + ", ";
     };
     params->vars.foreach(f);
     if (params->vars.size()) val.pop_back(), val.pop_back();

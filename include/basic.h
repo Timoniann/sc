@@ -38,7 +38,7 @@ enum MESSAGE_TYPE
     MessageError = Red,
     MessageWarning = Yellow,
     MessagePlain = Black,
-    MessageEasyError = Magenta
+    MessageEasyError = Cyan
 };
 
 void SetColor(int text, ConsoleColor background);
