@@ -21,3 +21,4 @@ tick2 = ticks();
 result = tick2 - tick1;
 
 superResult = ticks() - ticks();
+cout("SuperResult = " + (ticks() - ticks()));

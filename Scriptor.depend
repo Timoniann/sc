@@ -85,10 +85,10 @@
 	<iostream>
 	<windows.h>
 
-1499433972 source:e:\projects\c++\sc\src\basic.cpp
+1499445104 source:e:\projects\c++\sc\src\basic.cpp
 	<basic.h>
 
-1499439916 source:e:\projects\c++\sc\src\script.cpp
+1499445773 source:e:\projects\c++\sc\src\script.cpp
 	"Script.h"
 	<basic.h>
 	<algorithm>

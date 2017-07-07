@@ -124,12 +124,18 @@ string readString(string & data, unsigned int & iter)
     return str;
 }
 
+char * impOps = "()\"\\";
+
 string readOperator(string & data, unsigned int & iter)
 {
     string result = "";
+    result += data[iter++];
     while(iter < data.size() && !delim(data[iter]) && !isalnum(data[iter]))
     {
-        result += data[iter++];
+        char c = data[iter];
+        if(In(c, impOps)) break;
+        result += c;
+        iter++;
     }
     iter--;
     return result;

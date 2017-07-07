@@ -119,7 +119,7 @@ Script::Script(vector<string> & strs) : Script()
                         Log("Syntax error. Wrong using operator ')'", MessageEasyError);
                         continue;
                     }
-                    if(brackets.back()) triple.push_back(make_tuple(ORDER_PUSH_OP, "" + c, i));
+                    if(brackets.back()) triple.push_back(make_tuple(ORDER_PUSH_OP, (string)"" + c, i));
                     else
                         if(last == OPEN_FUNC) triple.push_back(make_tuple(ORDER_CALL_FUNC_WITHOUT_PARAMS, (string)"" + c, i));
                         else { triple.push_back(make_tuple(ORDER_CALL_FUNC, (string)"" + c, i)); last = LETTER; brackets.pop_back(); continue; }
@@ -223,12 +223,13 @@ Script * Script::Execute(vector<Script*> & parameters)
                     }
                     else { // more params
                         while (op.back() != "//"){
-                        if(op.size() == 0) {
-                            Log("Syntax error. Cannot call function with parameters in line '" + to_string(i) + "'", MessageError);
-                            break;
-                        }
-                        process_op (st, op.back());
-                        op.pop_back();
+                            if(op.size() == 0) {
+                                Log("Syntax error. Cannot call function with parameters in line '" + to_string(i) + "'", MessageError);
+                                break;
+                            }
+                            if(op.back() == "(") { op.pop_back(); continue; }
+                            process_op (st, op.back());
+                            op.pop_back();
                         }
                         op.pop_back();
                         prms = st.back();
@@ -280,14 +281,15 @@ Script * Script::Execute(vector<Script*> & parameters)
                     if(oper == "(") { op.push_back (oper); }
                     else if (oper == ")") {
                         while (op.back() != "(" && op.back() != "//"){
+                            cout << "Back '" << op.back() << "' ";
                             process_op (st, op.back());
+                            cout << "Back processed\n";
                             op.pop_back();
                         }
                         op.pop_back();
                     }
                     else {
-                        while (!op.empty() && priority(op.back()) >= priority(oper)){
-                            cout << op.back();
+                        while (!op.empty() && op.back() != "//" && op.back() != "(" && priority(op.back()) >= priority(oper)){
                             process_op(st, op.back()), op.pop_back();
                         }
                         op.push_back (oper);
@@ -308,7 +310,8 @@ Script * Script::Execute(vector<Script*> & parameters)
         }
         cout << "Other opers\n";
         while (!op.empty())
-            process_op (st, op.back()),  op.pop_back();
+            if(op.back() == "(") op.pop_back();
+            else process_op (st, op.back()),  op.pop_back();
         if(newValue != "" && st.size() > 0)
             AddVar(newValue, st.back());
     }
@@ -530,11 +533,9 @@ Script * CountC(Script * self, Script * params)
 
 Script * CoutParams(Script * self, Script * params)
 {
-    cout << "\n____________________Log____________________\n";
-    cout << "Size: " << params->vars.size() << "\n";
+    //cout << "Size: " << params->vars.size() << "\n";
     for(int i = 0; i < params->vars.size(); i++)
-        cout << "'" << params->vars[i]->funcs["ToString"]->Execute(*params->vars[i])->GetValue() << "' ";
-    cout << "\n\\___________________Log___________________/\n";
+        cout << params->vars[i]->funcs["ToString"]->Execute(*params->vars[i])->GetValue() << "\n";
     return new Script("null", "null");
 }
 
