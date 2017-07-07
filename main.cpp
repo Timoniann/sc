@@ -44,7 +44,7 @@ void ReadCommand(Script * script, string & data, unsigned int & iter)
     ClearSpaces(data, iter);
     string name = GetWord(data, iter);
     ClearSpaces(data, iter);
-    if (data[iter] != '=') Log((string)"Expected '=', but given '" + data[iter] + "'", 3);
+    if (data[iter] != '=') Log((string)"Expected '=', but given '" + data[iter] + "'", MessageError);
     iter++;
     ClearSpaces(data, iter);
     ///READING VALUE
@@ -55,7 +55,7 @@ void ReadCommand(Script * script, string & data, unsigned int & iter)
     //script->AddVar(name, value);
     ClearSpaces(data, iter);
 
-    if (data[iter] != ';') Log((string)"Expected ';', but given '" + data[iter] + "' (" + to_string(iter) + ")", 4);
+    if (data[iter] != ';') Log((string)"Expected ';', but given '" + data[iter] + "' (" + to_string(iter) + ")", MessageError);
     iter++;
     if(iter < data.size()) ReadCommand(script, data, iter);
 }
@@ -73,11 +73,12 @@ Script * ReadScript(char * file_path)
     return script;
 }
 
+/*
 void ZeroMemory(char * str, int size)
 {
     for (int i = 0; i < size; i++)
         str[i] = '\0';
-}
+}*/
 
 void Handler(Script &script)
 {
@@ -101,45 +102,12 @@ void Handler(Script &script)
     }
 }
 
-enum ConsoleColor
-{
-        Black         = 0,
-        Blue          = 1,
-        Green         = 2,
-        Cyan          = 3,
-        Red           = 4,
-        Magenta       = 5,
-        Brown         = 6,
-        LightGray     = 7,
-        DarkGray      = 8,
-        LightBlue     = 9,
-        LightGreen    = 10,
-        LightCyan     = 11,
-        LightRed      = 12,
-        LightMagenta  = 13,
-        Yellow        = 14,
-        White         = 15
-};
-
-#include <windows.h>
-
-void SetColor(int text, int background)
-{
-    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(hStdOut, (WORD)((background << 4) | text));
-}
-
-void SetColor(int text, ConsoleColor background)
-{
-   HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdOut, (WORD)((background << 4) | text));
-}
-
 int main(int argc, char ** argv)
 {
-    system("COLOR 00");
+    system("COLOR F0");
+    //SetConsoleTextAttribute (GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
     cout << "Hello, gigach\n";
-    SetColor(White, Black);
+    SetColor(Black, White);
     InitOperators();
     /*
     Dictionary<string, unsigned int> dic("Hello", 1);

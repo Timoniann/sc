@@ -27,6 +27,7 @@ class Script
         Script(string type, string value);
         Script(Script * parent, string type, string value, bool standart = true);
         Script(Script * parent);
+        Script(Script* (* func)(Script * self, Script * params));
 
         virtual Script * Execute(vector<Script*> & parameters);
         virtual Script * Execute(Script & parameter);
@@ -45,6 +46,7 @@ class Script
         static void copy(Script * s1, Script * s2);
 
         string type;
+        string value;
     protected:
 
         Script * (* constructor) (Script * self, Script * params) = nullptr;
@@ -53,7 +55,6 @@ class Script
         //Dictionary<string, Script> operators;
         //make_tuple(COMMAND_ID, "variable", "values");
         vector<string> params;
-        string value;
         static void process_op (vector<Script*> & st, string op);
 };
 

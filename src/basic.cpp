@@ -1,8 +1,16 @@
 #include <basic.h>
 
-void Log(string text, int error_code)
+void SetColor(int text, ConsoleColor background)
 {
+    HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(hStdOut, (WORD)((background << 4) | text));
+}
+
+void Log(string text, MESSAGE_TYPE msg_type, int error_code)
+{
+    SetColor(msg_type, White);
     cout << text << "\n";
+    SetColor(MessagePlain, White);
 }
 
 bool delim (char c) {
@@ -34,7 +42,7 @@ string GetWord(string & data, unsigned int & i)
         if (In(data[i], spaces))
             return word;
     }
-    Log("Syntax error", 2);
+    Log("Syntax error in GetWord function", MessageError);
     return word;
 }
 
@@ -68,7 +76,7 @@ void Init()
 int priority (string op) {
     return
         //op == "(" || ")" ? 5 :
-        op == "," ? 1 :
+        op == "," ? -2 :
         op == "==" || op == "<" || op == ">" || op == "!=" ? 2 :
         op == "+" || op == "-" ? 3 :
         op == "*" || op == "/" || op == "%" ? 4 :
@@ -99,7 +107,7 @@ string readWord(string & str, unsigned int & iter)
 
 string readString(string & data, unsigned int & iter)
 {
-    if(!In(data[iter], "'\"")) { Log((string)"GET STRING NOT STRING!!!", 1); return ""; }
+    if(!In(data[iter], "'\"")) { Log((string)"GET STRING NOT STRING!!!", MessageError); return ""; }
     char parser = data[iter];
     string str;
     iter++;
@@ -109,7 +117,7 @@ string readString(string & data, unsigned int & iter)
         if (data[iter] == '\\') { str += data[iter++]; str += data[iter++]; continue; }
         if (data[iter] == parser){ return str; }
     }
-    Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\\n'", 2);
+    Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\\n'", MessageError);
     cout << "Str: " << str << "\n";
     return str;
 }

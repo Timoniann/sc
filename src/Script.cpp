@@ -39,6 +39,11 @@ Script::Script(Script * parent, string type, string value, bool standart)
     if (standart) Script();
 }
 
+Script::Script(Script* (* func)(Script * self, Script * params))
+{
+    constructor = func;
+}
+
 Script::Script(string type, string value) : Script()
 {
     this->type = type;
@@ -82,11 +87,11 @@ Script::Script(vector<string> & strs) : Script()
                         path += c;
                         continue;
                     }
-                    else Log((string)"Syntax error wrong using '" + c + "'");
+                    else Log((string)"Syntax error wrong using '" + c + "'", MessageError);
                 }
                 else if(c == '(')
                 {
-                    if(last == NUMBER) Log("Syntax error. Operator '(' after number can not be");
+                    if(last == NUMBER) Log("Syntax error. Operator '(' after number can not be", MessageError);
                     else if(last == OPERATOR || last == NOTHING)
                     {
                         brackets.push_back(true);
@@ -101,7 +106,7 @@ Script::Script(vector<string> & strs) : Script()
                         last = OPEN_FUNC;
                         continue;
                     }
-                    else Log("Syntax error. Operator '(' after string can't be used");
+                    else Log("Syntax error. Operator '(' after string can't be used", MessageEasyError);
                 }
                 else if(last == LETTER && path != "")
                 {
@@ -111,7 +116,7 @@ Script::Script(vector<string> & strs) : Script()
                 {
                     if(brackets.size() == 0)
                     {
-                        Log("Syntax error. Wrong using operator ')'");
+                        Log("Syntax error. Wrong using operator ')'", MessageEasyError);
                         continue;
                     }
                     if(brackets.back()) triple.push_back(make_tuple(ORDER_PUSH_OP, "" + c, i));
@@ -130,7 +135,7 @@ Script::Script(vector<string> & strs) : Script()
                 }
                 else if(c == '/' && strs[i][j + 1] == '/')
                 {
-                    if(triple.size() > 0) Log("Unexpected '//' in line " + to_string(i)), last = NOTHING;
+                    if(triple.size() > 0) Log("Unexpected '//' in line " + to_string(i), MessageWarning); //last = NOTHING;
                     cout << "Comments\n";
                     break;
                 }
@@ -197,10 +202,13 @@ Script * Script::Execute(vector<Script*> & parameters)
                         break;
                     }
                     Script * prms = nullptr;
-                    if(op.back() == "//") {
+                    if(op.back() == "//") { // 1 param
                         cout << "Calling function with parameters\n";
                         while (op.back() != "//"){
-                            if(op.size() == 0) { Log("Syntax error. Cannot call function with parameters in line '" + to_string(i) + "'"); break; }
+                            if(op.size() == 0) {
+                                Log("Syntax error. Cannot call function with parameters in line '" + to_string(i) + "'", MessageError);
+                                break;
+                            }
                             process_op (st, op.back());
                             op.pop_back();
                         }
@@ -213,28 +221,45 @@ Script * Script::Execute(vector<Script*> & parameters)
                             prms = arr;
                         }
                     }
-                    else Log("Wrong calling function. Not find open bracket");
+                    else { // more params
+                        while (op.back() != "//"){
+                        if(op.size() == 0) {
+                            Log("Syntax error. Cannot call function with parameters in line '" + to_string(i) + "'", MessageError);
+                            break;
+                        }
+                        process_op (st, op.back());
+                        op.pop_back();
+                        }
+                        op.pop_back();
+                        prms = st.back();
+                        cout << "(_+_+_+_+_+_+_" << prms->GetValue() << "_+_+_+_+_+_+_)\n";
+                        if(prms->GetType() != "array"){
+                            Script * arr = _global->funcs["array"]->Execute("Param to array");
+                            arr->vars.add(prms);
+                            prms = arr;
+                        }
+                    }
                     if(funcs.count(funcsToCall.back()))
                         st.push_back(funcs[funcsToCall.back()]->Execute(*prms));
-                    else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'");
+                    else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError);
                     funcsToCall.pop_back();
                 }
                 break;
             case ORDER_CALL_FUNC_WITHOUT_PARAMS:
                     if(funcsToCall.size() == 0)
                     {
-                        Log("Can't call function " + get<1>(t) + " in line " + to_string(get<2>(t)));
+                        Log("Can't call function " + get<1>(t) + " in line " + to_string(get<2>(t)), MessageError);
                         break;
                     }
                     if(op.back() == "//") {
                         cout << "Calling function without parameters\n";
                         if(funcs.count(funcsToCall.back()))
                             st.push_back(funcs[funcsToCall.back()]->Execute(*_global->funcs["array"]->Execute("CFWOP")));
-                        else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'");
+                        else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError);
                         op.pop_back();
                         funcsToCall.pop_back();
                     }
-                    else Log("Wrong calling function. Not find open bracket");
+                    else Log("Wrong calling function. Not find open bracket", MessageError);
                 break;
             case ORDER_CREATE:
                 newValue = get<1>(t);
@@ -325,7 +350,7 @@ string Script::StackVariables()
                 Script * toS = p.second->funcs["ToString"];
             if(toS != nullptr)
                 result += p.first + " = " + toS->Execute(*p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
-            else Log("ToString() is not defined in type '" + p.second->GetType() + "'");
+            else Log("ToString() is not defined in type '" + p.second->GetType() + "'", MessageEasyError);
         }
 
     return result;
@@ -361,7 +386,7 @@ void Script::process_op (vector<Script *> & st, string op)
     }
     else cout << "Not have operator '" << op << "'\n";
 
-    Log("Operator '" + op + "' not declared in type '" + l->GetType() + "'", 5);
+    Log("Operator '" + op + "' not declared in type '" + l->GetType() + "'", MessageEasyError);
     st.push_back(new Script(nullptr, "null", ""));
 
 }
@@ -454,6 +479,13 @@ Script * ArrayPlus(Script * p1, Script * p2)
     return result;
 }
 
+Script * StringPlus(Script * p1, Script * p2)
+{
+    Script * result = new Script();
+    *result = *p1;
+    result->value += p2->funcs["ToString"]->Execute(*p2)->GetValue();
+    return result;
+}
 
 /// Constructors
 
@@ -467,7 +499,7 @@ Script * IntConstructor(Script * self, Script * params)
         return newInt;
     } catch(exception e)
     {
-        Log("Can't parsing to int(" + params->GetValue() + ")");
+        Log("Can't parsing to int(" + params->GetValue() + ")", MessageEasyError);
         return new Script("int", "0");
     }
 }
@@ -521,6 +553,7 @@ string GetValue(Script * self)
     return result;
 }
 
+
 void InitOperators()
 {
     operators["="].push_back(make_tuple("null", "null", new Operator(Assign)));
@@ -532,6 +565,8 @@ void InitOperators()
     operators["/"].push_back(make_tuple("int", "int", new Operator(Divide)));
 
     operators["+"].push_back(make_tuple("array", "null", new Operator(ArrayPlus)));
+
+    operators["+"].push_back(make_tuple("string", "null", new Operator(StringPlus)));
 
 }
 

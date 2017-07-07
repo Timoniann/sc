@@ -7,4 +7,7 @@ d = 4 , 2;
 q = d + 2;
 str = "This is the \nstring";
 count();
+string = "Gaga" + "Kaka";
+s.d = "Pot";
 cout("Hello, i am the Timoniann");
+cout(1 + 2 * 10);
