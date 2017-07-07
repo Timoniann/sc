@@ -105,7 +105,6 @@ void Handler(Script &script)
 int main(int argc, char ** argv)
 {
     system("COLOR F0");
-    //SetConsoleTextAttribute (GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED);
     cout << "Hello, gigach\n";
     SetColor(Black, White);
     InitOperators();
@@ -116,8 +115,6 @@ int main(int argc, char ** argv)
     return 0;*/
     Init();
     if (argc == 1) argv[1] = "bin/Debug/main.sc";
-        //Log("Nothing to interpret\n");
-    //else
     {
         Script * s = ReadScript(argv[1]);
         Handler(*s);

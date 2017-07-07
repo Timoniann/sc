@@ -12,3 +12,12 @@ s.d = "Pot";
 cout("Hello, i am the Timoniann");
 arr = s.d , cout( 1 + 2 * 10 );
 t = a * 4 , 25;
+f = 3 == 5;
+f1 = 3 == 3;
+f2 = false;
+tick1 = ticks();
+//in = 5 * 20 + 231 / 235 - 242;
+tick2 = ticks();
+result = tick2 - tick1;
+
+superResult = ticks() - ticks();

@@ -65,7 +65,7 @@
 1498421911 e:\projects\c++\scriptor\include\int.h
 	<Script.h>
 
-1499259489 source:e:\projects\c++\sc\main.cpp
+1499439120 source:e:\projects\c++\sc\main.cpp
 	<fstream>
 	<cstring>
 	<Script.h>
@@ -78,17 +78,17 @@
 	<tuple>
 	<iostream>
 
-1499431140 e:\projects\c++\sc\include\basic.h
+1499434032 e:\projects\c++\sc\include\basic.h
 	<string>
 	<cstring>
 	<vector>
 	<iostream>
 	<windows.h>
 
-1499431499 source:e:\projects\c++\sc\src\basic.cpp
+1499433972 source:e:\projects\c++\sc\src\basic.cpp
 	<basic.h>
 
-1499430749 source:e:\projects\c++\sc\src\script.cpp
+1499439916 source:e:\projects\c++\sc\src\script.cpp
 	"Script.h"
 	<basic.h>
 	<algorithm>

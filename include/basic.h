@@ -64,5 +64,6 @@ int priority (string op);
 string readNumber(string & str, unsigned int & iter);
 string readWord(string & str, unsigned int & iter);
 string readString(string & data, unsigned int & iter);
+string readOperator(string & data, unsigned int & iter);
 
 #endif // BASIC_H_INCLUDED

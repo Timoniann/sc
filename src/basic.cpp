@@ -10,7 +10,7 @@ void Log(string text, MESSAGE_TYPE msg_type, int error_code)
 {
     if(msg_type == MessagePlain)
         SetColor(msg_type, White);
-    else SetColor(msg_type, Black);
+    else SetColor(msg_type, LightBlue);
     cout << text << "\n";
     SetColor(MessagePlain, White);
 }
@@ -122,4 +122,15 @@ string readString(string & data, unsigned int & iter)
     Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\\n'", MessageError);
     cout << "Str: " << str << "\n";
     return str;
+}
+
+string readOperator(string & data, unsigned int & iter)
+{
+    string result = "";
+    while(iter < data.size() && !delim(data[iter]) && !isalnum(data[iter]))
+    {
+        result += data[iter++];
+    }
+    iter--;
+    return result;
 }

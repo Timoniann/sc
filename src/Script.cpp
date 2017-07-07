@@ -150,7 +150,7 @@ Script::Script(vector<string> & strs) : Script()
                 else if(c == '}') Log((string)"Unhandled operator '" + c + "'");
                 else if(c == '[') Log((string)"Unhandled operator '" + c + "'");
                 else if(c == ']') Log((string)"Unhandled operator '" + c + "'");
-                else { triple.push_back(make_tuple(ORDER_PUSH_OP, (string)"" + c, i)); }
+                else { triple.push_back(make_tuple(ORDER_PUSH_OP, readOperator(str, j), i)); }
                 last = OPERATOR;
 
             }
@@ -458,6 +458,16 @@ Script * Assign(Script * p1, Script * p2)
     return p1;
 }
 
+Script * EqualsFull(Script * p1, Script * p2)
+{
+    return _global->funcs["bool"]->Execute(to_string(p1 == p2));
+}
+
+Script * Equals(Script * p1, Script * p2)
+{
+    return _global->funcs["bool"]->Execute(to_string(p1->GetValue() == p2->GetValue()));
+}
+
 Script * Multi(Script * p1, Script * p2)
 {
     return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) * stoi(p2->GetValue())));
@@ -536,6 +546,26 @@ Script * ArrayConstructor(Script * self, Script * params)
     return newArray;
 }
 
+Script * BoolConstructor(Script * self, Script * params)
+{
+    Script * newBool = new Script();
+    Script::copy(newBool, self);
+    if(params == nullptr)
+        newBool->SetValue("false");
+    else if(params->GetType() == "null")
+        newBool->SetValue("false");
+    else if(params->GetType() == "int")
+        if(atoi(params->GetValue().c_str()) == 0) newBool->SetValue("false");
+        else newBool->SetValue("true");
+    else if(params->GetType() == "bool")
+        newBool->SetValue(params->GetValue());
+    else if(params->GetType() == "string")
+        if(params->GetValue() == "" || params->GetValue() == "0")
+        newBool->SetValue("false");
+    else newBool->SetValue("true");
+    return newBool;
+}
+
 Script * SizeConstructor(Script * self, Script * params)
 {
     return new Script("int", to_string(self->parent->vars.size()));
@@ -568,6 +598,14 @@ void InitOperators()
 
     operators["+"].push_back(make_tuple("string", "null", new Operator(StringPlus)));
 
+    operators["==="].push_back(make_tuple("null", "null", new Operator(EqualsFull)));
+
+    Operator * eq = new Operator(Equals);
+    operators["=="].push_back(make_tuple("int", "int", eq));
+    operators["=="].push_back(make_tuple("string", "string", eq));
+    operators["=="].push_back(make_tuple("bool", "bool", eq));
+    //operators["=="].push_back(make_tuple("", "", eq));
+
 }
 
 Script * IntegerToString(Script * self, Script * params)
@@ -589,6 +627,11 @@ Script * ArrayToString(Script * self, Script * params)
     val += ']';
     str->SetValue(val);
     return str;
+}
+
+Script * GetTicks(Script * self, Script * param)
+{
+    return _global->funcs["int"]->Execute(to_string(GetTickCount()));
 }
 
 void Scripting(Script * global)
@@ -616,6 +659,12 @@ void Scripting(Script * global)
         _string->funcs.add("ToString", IntToString);
     global->funcs.add("string", _string);
 
+    Script * _bool = new Script("bool", "false");
+        _bool->SetConstructor(BoolConstructor);
+        _bool->funcs.add("ToString", IntToString);
+    global->funcs.add("bool", _bool);
+
+
         Script * _count = new Script("count", "CountString");
         _count->SetConstructor(CountC);
     global->funcs.add("count", _count);
@@ -623,7 +672,9 @@ void Scripting(Script * global)
         _cout->SetConstructor(CoutParams);
     global->funcs.add("cout", _cout);
 
-
+        Script * _ticks = new Script("func", "0");
+        _ticks->SetConstructor(GetTicks);
+    global->funcs.add("ticks", _ticks);
 
     _global = global;
 
