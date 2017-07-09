@@ -17,6 +17,7 @@
 #define ORDER_PUSH_FUNC 13
 #define ORDER_CALL_FUNC 14
 #define ORDER_CALL_FUNC_WITHOUT_PARAMS 15
+#define ORDER_PUSH_BOOL 16
 
 Script * _global;
 /// SCRIPT -----------------------------------
@@ -57,6 +58,7 @@ Script::Script(string type, string value) : Script()
 #define OPERATOR 3
 #define STRING 4
 #define OPEN_FUNC 5
+#define DOT 6 // . - dot
 
 Script::Script(vector<string> & strs) : Script()
 {
@@ -74,10 +76,21 @@ Script::Script(vector<string> & strs) : Script()
             char c = str[j];
             if(delim(c)) continue;
             cout << "'" << c << "' ";
-            if(isdigit(c)) triple.push_back(make_tuple(ORDER_PUSH_NUMBER, readNumber(str, j), i)), last = NUMBER;
+            if(isdigit(c)) {
+                if(last == OPERATOR || last == NOTHING || last == OPEN_FUNC) triple.push_back(make_tuple(ORDER_PUSH_NUMBER, readNumber(str, j), i)), last = NUMBER;
+                else if(last == NUMBER || last == LETTER || last == STRING) Log((string)"Unexpected '" + c + "'", MessageError, i);
+                else Log("Unhandled exception", MessageUnhandled);
+            }
             else if(isalpha(c)) {
-                if(last == LETTER) path += readWord(str, j);
-                else path = readWord(str, j);
+                if(last == NUMBER || last == STRING || last == LETTER) Log((string)"Unexpected '" + readWord(str, j) + "'", MessageError, i);
+
+                else if(last == DOT) path += readWord(str, j);
+                else {
+                    string word = readWord(str, j);
+                    if(word == "true" || word == "false")
+                        { triple.push_back(make_tuple(ORDER_PUSH_BOOL, word, i)); last = NUMBER; continue; }
+                    else path = word;
+                }
                 last = LETTER;
             }
             else{
@@ -85,6 +98,7 @@ Script::Script(vector<string> & strs) : Script()
                     if(last == LETTER)
                     {
                         path += c;
+                        last = DOT;
                         continue;
                     }
                     else Log((string)"Syntax error wrong using '" + c + "'", MessageError);
@@ -198,15 +212,15 @@ Script * Script::Execute(vector<Script*> & parameters)
                 {
                     if(funcsToCall.size() == 0)
                     {
-                        Log("Can't call function " + get<1>(t) + " in line " + to_string(get<2>(t)));
+                        Log("Can't call function " + get<1>(t), MessageError, get<2>(t));
                         break;
                     }
                     Script * prms = nullptr;
                     if(op.back() == "//") { // 1 param
-                        cout << "Calling function with parameters\n";
+                        cout << "Calling function with 1 parameter\n";
                         while (op.back() != "//"){
                             if(op.size() == 0) {
-                                Log("Syntax error. Cannot call function with parameters in line '" + to_string(i) + "'", MessageError);
+                                Log("Syntax error. Cannot call function with parameters", MessageError, get<2>(t));
                                 break;
                             }
                             process_op (st, op.back());
@@ -214,7 +228,6 @@ Script * Script::Execute(vector<Script*> & parameters)
                         }
                         op.pop_back();
                         prms = st.back();
-                        cout << "_+_+_+_+_+_+_" << prms->GetValue() << "_+_+_+_+_+_+_\n";
                         if(prms->GetType() != "array"){
                             Script * arr = _global->funcs["array"]->Execute("Param to array");
                             arr->vars.add(prms);
@@ -224,7 +237,7 @@ Script * Script::Execute(vector<Script*> & parameters)
                     else { // more params
                         while (op.back() != "//"){
                             if(op.size() == 0) {
-                                Log("Syntax error. Cannot call function with parameters in line '" + to_string(i) + "'", MessageError);
+                                Log("Syntax error. Cannot call function with parameters", MessageError, get<2>(t));
                                 break;
                             }
                             if(op.back() == "(") { op.pop_back(); continue; }
@@ -233,7 +246,6 @@ Script * Script::Execute(vector<Script*> & parameters)
                         }
                         op.pop_back();
                         prms = st.back();
-                        cout << "(_+_+_+_+_+_+_" << prms->GetValue() << "_+_+_+_+_+_+_)\n";
                         if(prms->GetType() != "array"){
                             Script * arr = _global->funcs["array"]->Execute("Param to array");
                             arr->vars.add(prms);
@@ -242,25 +254,25 @@ Script * Script::Execute(vector<Script*> & parameters)
                     }
                     if(funcs.count(funcsToCall.back()))
                         st.push_back(funcs[funcsToCall.back()]->Execute(*prms));
-                    else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError);
+                    else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
                     funcsToCall.pop_back();
                 }
                 break;
             case ORDER_CALL_FUNC_WITHOUT_PARAMS:
                     if(funcsToCall.size() == 0)
                     {
-                        Log("Can't call function " + get<1>(t) + " in line " + to_string(get<2>(t)), MessageError);
+                        Log("Can't call function " + get<1>(t), MessageError, get<2>(t));
                         break;
                     }
                     if(op.back() == "//") {
                         cout << "Calling function without parameters\n";
                         if(funcs.count(funcsToCall.back()))
                             st.push_back(funcs[funcsToCall.back()]->Execute(*_global->funcs["array"]->Execute("CFWOP")));
-                        else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError);
+                        else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
                         op.pop_back();
                         funcsToCall.pop_back();
                     }
-                    else Log("Wrong calling function. Not find open bracket", MessageError);
+                    else Log("Wrong calling function. Not find open bracket", MessageError, get<2>(t));
                 break;
             case ORDER_CREATE:
                 newValue = get<1>(t);
@@ -270,10 +282,11 @@ Script * Script::Execute(vector<Script*> & parameters)
                 //funcs[get<1>(t)]->Execute(get<2>(t));
                 break;
             case ORDER_PUSH_VAL:
-            {
                 st.push_back(GetVariable(get<1>(t)));
                 break;
-            }
+            case ORDER_PUSH_BOOL:
+                st.push_back(_global->funcs["bool"]->Execute(get<1>(t)));
+                break;
             case ORDER_PUSH_OP:
                 {
                     string oper = get<1>(t);
@@ -281,9 +294,7 @@ Script * Script::Execute(vector<Script*> & parameters)
                     if(oper == "(") { op.push_back (oper); }
                     else if (oper == ")") {
                         while (op.back() != "(" && op.back() != "//"){
-                            cout << "Back '" << op.back() << "' ";
                             process_op (st, op.back());
-                            cout << "Back processed\n";
                             op.pop_back();
                         }
                         op.pop_back();
@@ -305,7 +316,7 @@ Script * Script::Execute(vector<Script*> & parameters)
                 st.push_back(_global->funcs["string"]->Execute(get<1>(t)));
                 break;
             default:
-                cout << "Invalid order(" << get<0>(t) << ")\n";
+                Log("Invalid order (" + to_string(get<0>(t)) + ")", MessageError, get<2>(t));
             }
         }
         cout << "Other opers\n";
@@ -353,7 +364,7 @@ string Script::StackVariables()
                 Script * toS = p.second->funcs["ToString"];
             if(toS != nullptr)
                 result += p.first + " = " + toS->Execute(*p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
-            else Log("ToString() is not defined in type '" + p.second->GetType() + "'", MessageEasyError);
+            else Log("ToString() is not defined in type '" + p.second->GetType() + "' of variable '" + p.first + "'", MessageEasyError);
         }
 
     return result;
@@ -361,6 +372,15 @@ string Script::StackVariables()
 
 void Script::process_op (vector<Script *> & st, string op)
 {
+
+    /// Handling
+
+    if(st.size() < 2) {
+        Log("Compilation problem. Size of stack = " + to_string(st.size()), MessageError);
+        return;
+    }
+
+    /// -
 
     Script * r = st.back();  st.pop_back();
     Script * l = st.back();  st.pop_back();

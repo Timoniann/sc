@@ -78,17 +78,17 @@
 	<tuple>
 	<iostream>
 
-1499434032 e:\projects\c++\sc\include\basic.h
+1499604357 e:\projects\c++\sc\include\basic.h
 	<string>
 	<cstring>
 	<vector>
 	<iostream>
 	<windows.h>
 
-1499445104 source:e:\projects\c++\sc\src\basic.cpp
+1499448572 source:e:\projects\c++\sc\src\basic.cpp
 	<basic.h>
 
-1499445773 source:e:\projects\c++\sc\src\script.cpp
+1499607012 source:e:\projects\c++\sc\src\script.cpp
 	"Script.h"
 	<basic.h>
 	<algorithm>

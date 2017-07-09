@@ -38,12 +38,13 @@ enum MESSAGE_TYPE
     MessageError = Red,
     MessageWarning = Yellow,
     MessagePlain = Black,
-    MessageEasyError = Cyan
+    MessageEasyError = Cyan,
+    MessageUnhandled = DarkGray
 };
 
 void SetColor(int text, ConsoleColor background);
 
-void Log(string text, MESSAGE_TYPE msg_type = MessagePlain, int error_code = -1);
+void Log(string text, MESSAGE_TYPE msg_type = MessagePlain, unsigned int line = 0, int error_code = -1);
 
 bool delim (char c);
 

@@ -1,7 +1,7 @@
 //a = 5 + 2;
 a = 3;
 b = 5;
-c = b + a + 2 + 6 + a;
+c = b +(a + 2)+ 6 + a;
 r = 3;
 d = 4 , 2;
 q = d + 2;
@@ -10,7 +10,7 @@ count();
 string = "Gaga" + "Kaka";
 s.d = "Pot";
 cout("Hello, i am the Timoniann");
-arr = s.d , cout( 1 + 2 * 10 );
+arr = s.d , cout( 1 + 2 * 10);
 t = a * 4 , 25;
 f = 3 == 5;
 f1 = 3 == 3;
@@ -22,3 +22,10 @@ result = tick2 - tick1;
 
 superResult = ticks() - ticks();
 cout("SuperResult = " + (ticks() - ticks()));
+Stack = 123, "String", ticks();
+
+// type(param1) {
+// 	a = 2;
+// 	c = 3;
+// 	gaga = "Gaga";
+// }
