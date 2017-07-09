@@ -114,12 +114,34 @@ string readString(string & data, unsigned int & iter)
     if(!In(data[iter], "'\"")) { Log((string)"GET STRING NOT STRING!!!", MessageError); return ""; }
     char parser = data[iter];
     string str;
-    iter++;
     while(iter < data.size())
     {
-        str += data[iter++];
-        if (data[iter] == '\\') { str += data[iter++]; str += data[iter++]; continue; }
+        iter++;
         if (data[iter] == parser){ return str; }
+        if (data[iter] == '\\')
+        {
+            char c = data[++iter];
+            switch(c)
+            {
+            case '\'': str += 0x27; break;
+            case '"': str += 0x22; break;
+            case '?': str += 0x3f; break;
+            case '\\': str += 0x5c; break;
+            case '0': str += (char)0x00; break;
+            case 'a': str += 0x07; break;
+            case 'b': str += 0x08; break;
+            case 'f': str += 0x0c; break;
+            case 'n': str += 0x0a; break;
+            case 'r': str += 0x0d; break;
+            case 't': str += 0x09; break;
+            case 'v': str += 0x0b; break;
+            default: str += c; break;
+            }
+            //iter++;
+            //continue;
+        }
+        else str += data[iter];
+            //{ str += data[iter++]; str += data[iter++]; continue; }
     }
     Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\\n'", MessageError);
     cout << "Str: " << str << "\n";

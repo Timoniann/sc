@@ -29,3 +29,5 @@ Stack = 123, "String", ticks();
 // 	c = 3;
 // 	gaga = "Gaga";
 // }
+cout(str);
+cout("AA: '\a'.\n");
