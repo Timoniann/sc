@@ -20,19 +20,19 @@ class Script
 
         Dictionary<string, Script*> vars;
         Dictionary<string, Script*> funcs;
+
         Script * parent = nullptr;
 
-        Script();
-        Script(vector<string> & strs);
-        Script(string type, string value);
-        Script(Script * parent, string type, string value, bool standart = true);
-        Script(Script * parent);
+        Script(){};
+        Script(Script * parent){ this->parent = parent; };
+        Script(Script * parent, string type, string value);
         Script(Script* (* func)(Script * self, Script * params));
 
-        virtual Script * Execute(vector<Script*> & parameters);
-        virtual Script * Execute(Script & parameter);
-        virtual Script * Execute(string param);
-        virtual string GetValue();
+        void Handler(vector<string> & strs, unsigned int & i, unsigned int & j);
+
+        Script * Execute(Script * parameters);
+        Script * Execute(string param);
+        string GetValue();
 
         void SetConstructor(Script* (* func)(Script * self, Script * params));
         void AddVar(string name, Script * value);

@@ -69,7 +69,10 @@ Script * ReadScript(char * file_path)
     {
         strs.push_back(str);
     }
-    Script * script = new Script(strs);
+    unsigned int i = 0;
+    unsigned int j = 0;
+    Script * script = new Script(nullptr, "Global", "STARTING");
+    script->Handler(strs, i, j);
     return script;
 }
 

@@ -18,39 +18,23 @@
 #define ORDER_CALL_FUNC 14
 #define ORDER_CALL_FUNC_WITHOUT_PARAMS 15
 #define ORDER_PUSH_BOOL 16
+#define ORDER_PUSH_TYPE 17
 
 Script * _global;
 /// SCRIPT -----------------------------------
 
-Script::Script()
-{
-
-}
-
-Script::Script(Script * parent) : Script()
+Script::Script(Script * parent, string type, string value)
 {
     this->parent = parent;
-}
-
-Script::Script(Script * parent, string type, string value, bool standart)
-{
-    this->parent = parent;
-    this->type = type;
+    if(parent == nullptr) this->type = type;
+    else this->type = parent->GetType() + '.' + type;
     this->value = value;
-    if (standart) Script();
 }
 
 Script::Script(Script* (* func)(Script * self, Script * params))
 {
     constructor = func;
 }
-
-Script::Script(string type, string value) : Script()
-{
-    this->type = type;
-    this->value = value;
-}
-
 
 #define NOTHING 0
 #define NUMBER 1
@@ -59,19 +43,23 @@ Script::Script(string type, string value) : Script()
 #define STRING 4
 #define OPEN_FUNC 5
 #define DOT 6 // . - dot
+#define MODIFICATOR 7
+#define NEW_TYPE 8
+#define TYPE_PUSH_PARAMS 9
 
-Script::Script(vector<string> & strs) : Script()
+void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
 {
     vector<tuple<unsigned int, string, unsigned int>> triple;
-
+    string newScriptName = "";
+    vector<string> type_params;
     int last = NOTHING;
     string path = "";
     vector<bool> brackets;
 
-    for(unsigned int i = 0; i < strs.size(); i++)
+    for(; i < strs.size(); i++)
     {
         string & str = strs[i];
-        for(unsigned int j = 0; j < str.size(); j++)
+        for(; j < str.size(); j++)
         {
             char c = str[j];
             if(delim(c)) continue;
@@ -82,13 +70,34 @@ Script::Script(vector<string> & strs) : Script()
                 else Log("Unhandled exception", MessageUnhandled);
             }
             else if(isalpha(c)) {
-                if(last == NUMBER || last == STRING || last == LETTER) Log((string)"Unexpected '" + readWord(str, j) + "'", MessageError, i);
+                if(last == NUMBER || last == STRING || last == LETTER) Log((string)"Unexpected typed '" + readWord(str, j) + "'", MessageError, i);
 
                 else if(last == DOT) path += readWord(str, j);
                 else {
                     string word = readWord(str, j);
-                    if(word == "true" || word == "false")
-                        { triple.push_back(make_tuple(ORDER_PUSH_BOOL, word, i)); last = NUMBER; continue; }
+                    if(word == "type"){
+                        if(last == NOTHING){
+                            //triple.push_back(make_tuple(ORDER_PUSH_TYPE, "type", i));
+                            last = MODIFICATOR;
+                            continue;
+                        }
+                        else Log("Unexpected '" + word + "'", MessageError, i+1);
+                    }
+                    else if(word == "true" || word == "false") {
+                            triple.push_back(make_tuple(ORDER_PUSH_BOOL, word, i));
+                            last = NUMBER;
+                            continue;
+                        }
+                    else if(last == MODIFICATOR) {
+                            //triple.push_back(make_tuple(ORDER_PUSH_TYPE, word, i));
+                            newScriptName = word;
+                            last = NEW_TYPE;
+                            continue;
+                        }
+                    else if(last == TYPE_PUSH_PARAMS){
+                        type_params.push_back(word);
+                        continue;
+                    }
                     else path = word;
                 }
                 last = LETTER;
@@ -101,11 +110,11 @@ Script::Script(vector<string> & strs) : Script()
                         last = DOT;
                         continue;
                     }
-                    else Log((string)"Syntax error wrong using '" + c + "'", MessageError);
+                    else Log((string)"Syntax error wrong using '" + c + "'", MessageError, i);
                 }
                 else if(c == '(')
                 {
-                    if(last == NUMBER) Log("Syntax error. Operator '(' after number can not be", MessageError);
+                    if(last == NUMBER) Log("Syntax error. Operator '(' after number can not be", MessageError, i);
                     else if(last == OPERATOR || last == NOTHING)
                     {
                         brackets.push_back(true);
@@ -120,7 +129,11 @@ Script::Script(vector<string> & strs) : Script()
                         last = OPEN_FUNC;
                         continue;
                     }
-                    else Log("Syntax error. Operator '(' after string can't be used", MessageEasyError);
+                    else if(last == NEW_TYPE){
+                        last = TYPE_PUSH_PARAMS;
+                        continue;
+                    }
+                    else Log("Syntax error. Operator '(' after string can't be used", MessageEasyError, i);
                 }
                 else if(last == LETTER && path != "")
                 {
@@ -128,9 +141,14 @@ Script::Script(vector<string> & strs) : Script()
                 }
                 if(c == ')')
                 {
+                    if(last == TYPE_PUSH_PARAMS)
+                    {
+                        last = NEW_TYPE;
+                        continue;
+                    }
                     if(brackets.size() == 0)
                     {
-                        Log("Syntax error. Wrong using operator ')'", MessageEasyError);
+                        Log("Syntax error. Wrong using operator ')'", MessageEasyError, i);
                         continue;
                     }
                     if(brackets.back()) triple.push_back(make_tuple(ORDER_PUSH_OP, (string)"" + c, i));
@@ -149,7 +167,7 @@ Script::Script(vector<string> & strs) : Script()
                 }
                 else if(c == '/' && strs[i][j + 1] == '/')
                 {
-                    if(triple.size() > 0) Log("Unexpected '//' in line " + to_string(i), MessageWarning); //last = NOTHING;
+                    if(triple.size() > 0) Log("Unexpected '//' in line " + to_string(i), MessageWarning, i); //last = NOTHING;
                     cout << "Comments\n";
                     break;
                 }
@@ -160,23 +178,47 @@ Script::Script(vector<string> & strs) : Script()
                     cout << "<String: '" << s << "'> ";
                     continue;
                 }
-                else if(c == '{') Log((string)"Unhandled operator '" + c + "'");
-                else if(c == '}') Log((string)"Unhandled operator '" + c + "'");
-                else if(c == '[') Log((string)"Unhandled operator '" + c + "'");
-                else if(c == ']') Log((string)"Unhandled operator '" + c + "'");
+                else if(c == '{') {
+                    /// Creating new object(type);
+                    if(last == NEW_TYPE){
+                        Log("Creating new object", MessageWarning, i);
+                        if(newScriptName == "") {
+                            Log("Name of new script is empty", MessageEasyError, i);
+                        }
+                        Script * newScript = new Script(this, newScriptName, "Compiled new script");
+                        j++;
+                        //triple.push_back(make_tuple(ORDER_PUSH_TYPE, newScriptName, i));
+                        newScript->Handler(strs, i, j);
+                        str = strs[i];
+                        Log("HANDLED!", MessageWarning, i);
+                        funcs.add(newScriptName, newScript);
+                        continue;
+                    }
+                    else Log("Unhandled operator '{'");
+                }
+                else if(c == '}') {
+                    if(parent != nullptr){
+                        j++;
+                        Log("Close function", MessageWarning, i);
+                        return;
+                    }
+                    else Log("Unexpected '}'. Not have parent", MessageError, i);
+                }
+                else if(c == '[') Log((string)"Unhandled operator '" + c + "'", MessageWarning);
+                else if(c == ']') Log((string)"Unhandled operator '" + c + "'", MessageWarning);
                 else { triple.push_back(make_tuple(ORDER_PUSH_OP, readOperator(str, j), i)); }
                 last = OPERATOR;
 
             }
-
         }
+        j = 0;
     }
 }
 
-Script * Script::Execute(vector<Script*> & parameters)
+Script * Script::Execute(Script * parameters)
 {
     if(constructor != nullptr)
-        return constructor(this, parameters.size() == 0 ? new Script("null", "") : parameters[0]);
+        return constructor(this, parameters);
 
     cout << "Start view\n";
     cout << cmds.size() << " - size\n";
@@ -253,8 +295,12 @@ Script * Script::Execute(vector<Script*> & parameters)
                         }
                     }
                     if(funcs.count(funcsToCall.back()))
-                        st.push_back(funcs[funcsToCall.back()]->Execute(*prms));
-                    else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
+                        st.push_back(funcs[funcsToCall.back()]->Execute(prms));
+                    else if(vars.count(funcsToCall.back())){
+                            cout << "Executing variable\n";
+                            st.push_back(vars[funcsToCall.back()]->Execute(prms));
+                        }
+                        else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
                     funcsToCall.pop_back();
                 }
                 break;
@@ -267,7 +313,7 @@ Script * Script::Execute(vector<Script*> & parameters)
                     if(op.back() == "//") {
                         cout << "Calling function without parameters\n";
                         if(funcs.count(funcsToCall.back()))
-                            st.push_back(funcs[funcsToCall.back()]->Execute(*_global->funcs["array"]->Execute("CFWOP")));
+                            st.push_back(funcs[funcsToCall.back()]->Execute(_global->funcs["array"]->Execute("CFWOP")));
                         else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
                         op.pop_back();
                         funcsToCall.pop_back();
@@ -329,17 +375,10 @@ Script * Script::Execute(vector<Script*> & parameters)
     return this;
 }
 
-Script * Script::Execute(Script & parameter)
-{
-    vector<Script*> p;
-    p.push_back(&parameter);
-    return Execute(p);
-}
-
 Script * Script::Execute(string param)
 {
-    Script * p = new Script("string", param);
-    return Execute(*p);
+    Script * p = new Script(nullptr, "string", param);
+    return Execute(p);
 }
 
 void Script::SetConstructor(Script* (* func)(Script * self, Script * params))
@@ -356,16 +395,25 @@ void Script::AddVar(string name, Script * value)
 string Script::StackVariables()
 {
     string result;
-    cout << "Stack:\n";
+    //cout << "Stack:\n";
     result = result + "Count: " + to_string(vars.size()) + "\n";
 
     for(pair<string, Script*> p : vars)
         if(p.second != nullptr){
-                Script * toS = p.second->funcs["ToString"];
+            Script * toS = p.second->funcs["ToString"];
             if(toS != nullptr)
-                result += p.first + " = " + toS->Execute(*p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
-            else Log("ToString() is not defined in type '" + p.second->GetType() + "' of variable '" + p.first + "'", MessageEasyError);
+                result += p.first + " = " + toS->Execute(p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
+            else {
+                result += p.first + ": {\n" + p.second->StackVariables() + "\n}";
+            }
+            /*else{
+                Script * sc = _global->funcs["array"]->Execute(p.second);
+                result += sc->StackVariables();
+                delete sc;
+            }*/
+            //else Log("ToString() is not defined in type '" + p.second->GetType() + "' of variable '" + p.first + "'", MessageEasyError);
         }
+        else Log("Nullptr in StackVariables", MessageWarning);
 
     return result;
 }
@@ -516,7 +564,7 @@ Script * StringPlus(Script * p1, Script * p2)
 {
     Script * result = new Script();
     *result = *p1;
-    result->value += p2->funcs["ToString"]->Execute(*p2)->GetValue();
+    result->value += p2->funcs["ToString"]->Execute(p2)->GetValue();
     return result;
 }
 
@@ -533,7 +581,7 @@ Script * IntConstructor(Script * self, Script * params)
     } catch(exception e)
     {
         Log("Can't parsing to int(" + params->GetValue() + ")", MessageEasyError);
-        return new Script("int", "0");
+        return new Script(nullptr, "int", "0");
     }
 }
 
@@ -548,15 +596,15 @@ Script * StringConstructor(Script * self, Script * params)
 Script * CountC(Script * self, Script * params)
 {
     cout << "Calling function of count\n";
-    return new Script("null", "null");
+    return new Script(nullptr, "null", "null");
 }
 
 Script * CoutParams(Script * self, Script * params)
 {
     //cout << "Size: " << params->vars.size() << "\n";
     for(int i = 0; i < params->vars.size(); i++)
-        cout << params->vars[i]->funcs["ToString"]->Execute(*params->vars[i])->GetValue() << "\n";
-    return new Script("null", "null");
+        cout << params->vars[i]->funcs["ToString"]->Execute(params->vars[i])->GetValue() << "\n";
+    return new Script(nullptr, "null", "null");
 }
 
 Script * ArrayConstructor(Script * self, Script * params)
@@ -589,7 +637,7 @@ Script * BoolConstructor(Script * self, Script * params)
 
 Script * SizeConstructor(Script * self, Script * params)
 {
-    return new Script("int", to_string(self->parent->vars.size()));
+    return new Script(nullptr, "int", to_string(self->parent->vars.size()));
 }
 
 /// ~Constructors
@@ -631,17 +679,17 @@ void InitOperators()
 
 Script * IntegerToString(Script * self, Script * params)
 {
-    return _global->funcs["string"]->Execute(*params);
+    return _global->funcs["string"]->Execute(params);
 }
 
 Script * ArrayToString(Script * self, Script * params)
 {
-    Script * str = _global->funcs["string"]->Execute(*self);
+    Script * str = _global->funcs["string"]->Execute(self);
     string val = "[";
     function<void(string, Script *)>f = [&val](string key, Script * value)
     {
         if(value->funcs.count("ToString"))
-            val += value->funcs["ToString"]->Execute(*value)->GetValue() + ", ";
+            val += value->funcs["ToString"]->Execute(value)->GetValue() + ", ";
     };
     params->vars.foreach(f);
     if (params->vars.size()) val.pop_back(), val.pop_back();
@@ -658,14 +706,14 @@ Script * GetTicks(Script * self, Script * param)
 void Scripting(Script * global)
 {
 
-    Script * _int = new Script("int", "0");
+    Script * _int = new Script(nullptr, "int", "0");
         _int->SetConstructor(IntConstructor);
             Script * IntToString = new Script(_int);
             IntToString->SetConstructor(IntegerToString);
         _int->funcs["ToString"] = IntToString;
     global->funcs.add("int", _int);
 
-    Script * _array = new Script("array", "[]");
+    Script * _array = new Script(nullptr, "array", "[]");
         _array->SetConstructor(ArrayConstructor);
             Script * sizeFunc = new Script(_array);
             sizeFunc->SetConstructor(SizeConstructor);
@@ -675,25 +723,25 @@ void Scripting(Script * global)
         _array->funcs.add("ToString", arrToString);
     global->funcs.add("array", _array);
 
-    Script * _string = new Script("string", "");
+    Script * _string = new Script(nullptr, "string", "");
         _string->SetConstructor(StringConstructor);
         _string->funcs.add("ToString", IntToString);
     global->funcs.add("string", _string);
 
-    Script * _bool = new Script("bool", "false");
+    Script * _bool = new Script(nullptr, "bool", "false");
         _bool->SetConstructor(BoolConstructor);
         _bool->funcs.add("ToString", IntToString);
     global->funcs.add("bool", _bool);
 
 
-        Script * _count = new Script("count", "CountString");
+        Script * _count = new Script(nullptr, "count", "CountString");
         _count->SetConstructor(CountC);
     global->funcs.add("count", _count);
-        Script * _cout = new Script("cout", "Cout");
+        Script * _cout = new Script(nullptr, "cout", "Cout");
         _cout->SetConstructor(CoutParams);
     global->funcs.add("cout", _cout);
 
-        Script * _ticks = new Script("func", "0");
+        Script * _ticks = new Script(nullptr, "func", "0");
         _ticks->SetConstructor(GetTicks);
     global->funcs.add("ticks", _ticks);
 
@@ -701,5 +749,5 @@ void Scripting(Script * global)
 
     /// Exec\n
     Script temp(global);
-    global->Execute(temp);
+    global->Execute(&temp);
 }

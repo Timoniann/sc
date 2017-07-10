@@ -116,8 +116,7 @@ string readString(string & data, unsigned int & iter)
     string str;
     while(iter < data.size())
     {
-        iter++;
-        if (data[iter] == parser){ return str; }
+        if (data[++iter] == parser){ return str; }
         if (data[iter] == '\\')
         {
             char c = data[++iter];
@@ -137,11 +136,8 @@ string readString(string & data, unsigned int & iter)
             case 'v': str += 0x0b; break;
             default: str += c; break;
             }
-            //iter++;
-            //continue;
         }
         else str += data[iter];
-            //{ str += data[iter++]; str += data[iter++]; continue; }
     }
     Log((string)"Syntax GetString error. Expected '" + parser + "', but given '\\n'", MessageError);
     cout << "Str: " << str << "\n";
