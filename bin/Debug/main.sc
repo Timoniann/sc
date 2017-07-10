@@ -1,7 +1,5 @@
-//Hello)
-cout("Object testing");
-type Object(){
-	stop = false;
-}
+cout("If statement");
 
-ob = Object();
+s = 7;
+if (s == 7) a = 2;
+else v = 3;

@@ -19,6 +19,9 @@
 #define ORDER_CALL_FUNC_WITHOUT_PARAMS 15
 #define ORDER_PUSH_BOOL 16
 #define ORDER_PUSH_TYPE 17
+#define ORDER_PUSH_STATEMENT 18
+#define ORDER_PUSH_IF 19
+#define ORDER_PUSH_ELSE 20
 
 Script * _global;
 /// SCRIPT -----------------------------------
@@ -46,6 +49,10 @@ Script::Script(Script* (* func)(Script * self, Script * params))
 #define MODIFICATOR 7
 #define NEW_TYPE 8
 #define TYPE_PUSH_PARAMS 9
+#define IF 10
+#define IF_OPEN 11
+#define ELSE 12
+
 
 void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
 {
@@ -53,6 +60,7 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
     string newScriptName = "";
     vector<string> type_params;
     int last = NOTHING;
+    int modify = NOTHING;
     string path = "";
     vector<bool> brackets;
 
@@ -88,6 +96,16 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                             last = NUMBER;
                             continue;
                         }
+                    else if(word == "if"){
+                        //triple.push_back(make_tuple(ORDER_PUSH_STATEMENT, word, i));
+                        last = IF;
+                        continue;
+                    }
+                    else if(word == "else"){
+                        //last = ELSE;
+                        triple.push_back(make_tuple(ORDER_PUSH_ELSE, word, i));
+                        continue;
+                    }
                     else if(last == MODIFICATOR) {
                             //triple.push_back(make_tuple(ORDER_PUSH_TYPE, word, i));
                             newScriptName = word;
@@ -133,6 +151,12 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         last = TYPE_PUSH_PARAMS;
                         continue;
                     }
+                    else if (last == IF){
+                        //last = IF_OPEN;
+                        last = NOTHING;
+                        modify = IF;
+                        continue;
+                    }
                     else Log("Syntax error. Operator '(' after string can't be used", MessageEasyError, i);
                 }
                 else if(last == LETTER && path != "")
@@ -148,7 +172,14 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                     }
                     if(brackets.size() == 0)
                     {
-                        Log("Syntax error. Wrong using operator ')'", MessageEasyError, i);
+                        if(modify == IF) {
+                                triple.push_back(make_tuple(ORDER_PUSH_IF, "if", i));
+                                cmds.push_back(triple);
+                                triple.clear();
+                                last = NOTHING;
+                                //modify = NOTHING;
+                        }
+                        else Log("Syntax error. Wrong using operator ')'", MessageEasyError, i);
                         continue;
                     }
                     if(brackets.back()) triple.push_back(make_tuple(ORDER_PUSH_OP, (string)"" + c, i));
@@ -157,12 +188,13 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         else { triple.push_back(make_tuple(ORDER_CALL_FUNC, (string)"" + c, i)); last = LETTER; brackets.pop_back(); continue; }
                     brackets.pop_back();
                 }
-                else if(c == ';' && triple.size() > 0)
+                else if(c == ';')// && triple.size() > 0
                 {
                     cout << "\n";
                     cmds.push_back(triple);
                     triple.clear();
                     last = NOTHING;
+                    modify = NOTHING;
                     continue;
                 }
                 else if(c == '/' && strs[i][j + 1] == '/')
@@ -353,6 +385,36 @@ Script * Script::Execute(Script * parameters)
                     }
                 }
                 break;
+            case ORDER_PUSH_IF:
+                if(st.size() == 0) Log("'If' don't have condition", MessageError, get<2>(t));
+                else{
+                    while (!op.empty())
+                        process_op (st, op.back()),  op.pop_back();
+                    if(st.back()->GetType() == "bool"){
+                        Log("If statement get bool type :)", MessageWarning, get<2>(t));
+                        if(st.back()->GetValue() == "true") {
+                            //i++;
+                            Log("I got true");
+                            break;
+                        }
+                        else {
+                            Log("I got false");
+                            i+=2;
+                            cmd = cmds[i];
+                            j = 0;
+                            op.clear();
+                            st.clear();
+                            break;
+                            //continue;
+                        }
+                    }
+                    else Log((string)"HANDLE NOT BOOL " + st.back()->GetType(), MessageWarning, get<2>(t));
+                }
+                break;
+            case ORDER_PUSH_ELSE:
+                Log("Wrong using 'else'", MessageError, get<2>(t));
+                j = cmd.size();
+                break;
             case ORDER_PUSH_POINTER:
                 pointers.push_back(get<1>(t));
                 break;
@@ -425,6 +487,8 @@ void Script::process_op (vector<Script *> & st, string op)
 
     if(st.size() < 2) {
         Log("Compilation problem. Size of stack = " + to_string(st.size()), MessageError);
+        if(st.size() == 1)
+            cout << st.back()->GetValue() << " - value\n";
         return;
     }
 

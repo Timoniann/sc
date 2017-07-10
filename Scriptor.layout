@@ -2,14 +2,9 @@
 <CodeBlocks_layout_file>
 	<FileVersion major="1" minor="0" />
 	<ActiveTarget name="Debug" />
-	<File name="include\Dictionary.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="459" topLine="0" />
-		</Cursor>
-	</File>
 	<File name="main.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2054" topLine="15" />
+			<Cursor1 position="2002" topLine="22" />
 		</Cursor>
 		<Folding>
 			<Collapse line="7" />
@@ -20,20 +15,19 @@
 	</File>
 	<File name="src\Script.cpp" open="1" top="1" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="7148" topLine="144" />
+			<Cursor1 position="26951" topLine="641" />
 		</Cursor>
 		<Folding>
-			<Collapse line="104" />
-			<Collapse line="148" />
-			<Collapse line="159" />
-			<Collapse line="167" />
-			<Collapse line="172" />
+			<Collapse line="26" />
+			<Collapse line="34" />
+			<Collapse line="105" />
+			<Collapse line="149" />
+			<Collapse line="308" />
+			<Collapse line="312" />
+			<Collapse line="336" />
+			<Collapse line="421" />
+			<Collapse line="465" />
 		</Folding>
-	</File>
-	<File name="include\Script.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="510" topLine="18" />
-		</Cursor>
 	</File>
 	<File name="include\basic.h" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
@@ -43,6 +37,16 @@
 	<File name="src\basic.cpp" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
 			<Cursor1 position="296" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\Dictionary.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="459" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\Script.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="510" topLine="18" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
