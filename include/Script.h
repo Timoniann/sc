@@ -20,11 +20,13 @@ class Script
 
         Dictionary<string, Script*> vars;
         Dictionary<string, Script*> funcs;
+        vector<Script*> tempFuncs;
+        vector<vector<tuple<unsigned int, string, unsigned int>>> cmds;
 
         Script * parent = nullptr;
 
-        Script(){};
-        Script(Script * parent){ this->parent = parent; };
+        Script();
+        Script(Script * parent);
         Script(Script * parent, string type, string value);
         Script(Script* (* func)(Script * self, Script * params));
 
@@ -32,6 +34,9 @@ class Script
 
         Script * Execute(Script * parameters);
         Script * Execute(string param);
+        Script * FuncToExecute(string funcName);
+        Script * SetParent(Script * parent);
+        Script * Clone();
         string GetValue();
 
         void SetConstructor(Script* (* func)(Script * self, Script * params));
@@ -45,17 +50,16 @@ class Script
 
         static void copy(Script * s1, Script * s2);
 
-        string type;
-        string value;
+        string type = "";
+        string value = "";
     protected:
 
         Script * (* constructor) (Script * self, Script * params) = nullptr;
     private:
-        vector<vector<tuple<unsigned int, string, unsigned int>>> cmds;
         //Dictionary<string, Script> operators;
         //make_tuple(COMMAND_ID, "variable", "values");
         vector<string> params;
-        static void process_op (vector<Script*> & st, string op);
+        void process_op (vector<Script*> & st, string op);
 };
 
 class Operator
@@ -72,5 +76,7 @@ protected:
 void InitOperators();
 
 void Scripting(Script * global);
+
+vector<Script*> & getAllScripts();
 
 #endif // SCRIPT_H
