@@ -32,15 +32,20 @@ class Script
 
         void Handler(vector<string> & strs, unsigned int & i, unsigned int & j);
 
+        Script * AddFunc(Script * script);
+        Script * AddVar(Script * script);
+        Script * AddFunc(string name, Script * script);
+        Script * AddVar(string name, Script * script);
+
         Script * Execute(Script * parameters);
         Script * Execute(string param);
         Script * FuncToExecute(string funcName);
         Script * SetParent(Script * parent);
-        Script * Clone();
+        Script * Clone(Script * to);
         string GetValue();
 
         void SetConstructor(Script* (* func)(Script * self, Script * params));
-        void AddVar(string name, Script * value);
+        //void AddVar(string name, Script * value);
         void SetValue(string val);
 
         string GetType();

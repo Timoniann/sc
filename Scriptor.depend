@@ -65,13 +65,13 @@
 1498421911 e:\projects\c++\scriptor\include\int.h
 	<Script.h>
 
-1499953288 source:e:\projects\c++\sc\main.cpp
+1500223745 source:e:\projects\c++\sc\main.cpp
 	<fstream>
 	<cstring>
 	<Script.h>
 	<basic.h>
 
-1500052492 e:\projects\c++\sc\include\script.h
+1500224525 e:\projects\c++\sc\include\script.h
 	<string>
 	<Dictionary.h>
 	<map>
@@ -88,7 +88,7 @@
 1499612826 source:e:\projects\c++\sc\src\basic.cpp
 	<basic.h>
 
-1500054106 source:e:\projects\c++\sc\src\script.cpp
+1500226681 source:e:\projects\c++\sc\src\script.cpp
 	"Script.h"
 	<basic.h>
 	<algorithm>
@@ -127,7 +127,7 @@
 1498762367 source:e:\projects\c++\sc\src\dictionary.cpp
 	"Dictionary.h"
 
-1498995558 e:\projects\c++\sc\include\dictionary.h
+1500227702 e:\projects\c++\sc\include\dictionary.h
 	<vector>
 	<iterator>
 	<functional>

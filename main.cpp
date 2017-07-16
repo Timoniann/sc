@@ -121,7 +121,7 @@ int main(int argc, char ** argv)
     system("COLOR F0");
     cout << "Hello, gigach\n";
     SetColor(Black, White);
-    InitOperators();
+
     /*
     Dictionary<string, unsigned int> dic("Hello", 1);
     dic.add("Hello2", 2);

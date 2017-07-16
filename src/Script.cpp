@@ -41,7 +41,8 @@ Script::Script(Script * parent, string type, string value) : Script()
 {
     this->parent = parent;
     if(parent == nullptr) this->type = type;
-    else this->type = parent->GetType() + '.' + type;
+    //else this->type = parent->GetType() + '.' + type;
+    this->type = type;
     this->value = value;
 }
 
@@ -234,7 +235,7 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         newScript->Handler(strs, i, j);
                         str = strs[i];
                         Log("HANDLED!", MessageWarning, i);
-                        funcs.add(newScriptName, newScript);
+                        AddFunc(newScriptName, newScript);
                         continue;
                     }
                     else {
@@ -343,7 +344,7 @@ Script * Script::Execute(Script * parameters)
                         prms = st.back();
                         if(prms->GetType() != "array"){
                             Script * arr = _global->funcs["array"]->Execute("Param to array");
-                            arr->vars.add(prms);
+                            arr->AddVar(prms);
                             prms = arr;
                         }
                     }
@@ -361,7 +362,7 @@ Script * Script::Execute(Script * parameters)
                         prms = st.back();
                         if(prms->GetType() != "array"){
                             Script * arr = _global->funcs["array"]->Execute("Param to array");
-                            arr->vars.add(prms);
+                            arr->AddVar(prms);
                             prms = arr;
                         }
                     }
@@ -499,45 +500,57 @@ void Script::SetConstructor(Script* (* func)(Script * self, Script * params))
     constructor = func;
 }
 
-void Script::AddVar(string name, Script * value)
+Script * Script::AddFunc(Script * script)
 {
-    //vars.add(value);
-    vars[name] = value;
+    return funcs.add(script)->SetParent(this);
+}
+
+Script * Script::AddVar(Script * script)
+{
+    return vars.add(script)->SetParent(this);
+}
+
+Script * Script::AddFunc(string name, Script * script)
+{
+    return funcs.add(name, script)->SetParent(this);
+}
+
+Script * Script::AddVar(string name, Script * script)
+{
+    return vars.add(name, script)->SetParent(this);
 }
 
 string Script::StackVariables()
 {
     string result;
     //cout << "Stack:\n";
-    result = result + "Count: " + to_string(vars.size()) + "\n";
+    result += "Type: '" + GetType() + "', value: '" + GetValue() + "'\n";
+    result += "Count: " + to_string(vars.size()) + "\n";
 
     for(pair<string, Script*> p : vars)
         if(p.second != nullptr){
-            Script * toS = p.second->funcs["ToString"];
-            if(toS != nullptr)
+            if(p.second->funcs.count("ToString")){
+                Script * toS = p.second->funcs["ToString"];
                 result += p.first + " = " + toS->Execute(p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
+            }
             else {
                 result += p.first + ": {\n" + p.second->StackVariables() + "\n}";
             }
-            /*else{
-                Script * sc = _global->funcs["array"]->Execute(p.second);
-                result += sc->StackVariables();
-                delete sc;
-            }*/
-            //else Log("ToString() is not defined in type '" + p.second->GetType() + "' of variable '" + p.first + "'", MessageEasyError);
         }
-    result += "\nFuncs:\n";
+        else Log("Nullptr variable in StackVariables", MessageWarning);
+    result += "Funcs:\n";
+    result += "Count: " + to_string(funcs.size()) + "\n";
     for(pair<string, Script*> p : funcs)
         if(p.second != nullptr){
-            Script * toS = p.second->funcs["ToString"];
-            if(toS != nullptr)
+            if(p.second->funcs.count("ToString")){
+                Script * toS = p.second->funcs["ToString"];
                 result += p.first + " = " + toS->Execute(p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
+            }
             else {
-                result += p.first + ": {\n" + p.second->StackVariables() + "\n}";
+                result += p.first + ": {\n" + p.second->StackVariables() + "}\n";
             }
         }
-
-        else Log("Nullptr in StackVariables", MessageWarning);
+        else Log("Nullptr function in StackVariables (" + funcs.keyOfIndex(0) + ")", MessageWarning);
 
     return result;
 }
@@ -618,47 +631,33 @@ string Script::GetType()
     return type;
 }
 
-Script * Script::Clone()
+Script * Script::Clone(Script * to)
 {
-    cout << "THIS TYPE = " << type << "\n";
-    Script * newScript = new Script(nullptr, type, value);
-    newScript->type = type;
-    newScript->cmds = cmds;
-    newScript->params = params;
-    newScript->tempFuncs = tempFuncs;
-    newScript->constructor = constructor;
+    if(to == nullptr)
+        to = new Script();
+    to->type = type;
+    to->value = value;
+    to->cmds = cmds;
+    to->params = params;
+    to->tempFuncs = tempFuncs;
+    to->constructor = constructor;
 
-    funcs.foreach([&newScript](string key, Script * value)
+    funcs.foreach([&to](string key, Script * value)
         {
-            newScript->funcs.add(key, value->Clone())->SetParent(newScript);
+            to->AddFunc(key, value->Clone(nullptr));
         });
-    vars.foreach([&newScript](string key, Script * value)
+    vars.foreach([&to](string key, Script * value)
         {
-            newScript->vars.add(key, value->Clone())->SetParent(newScript);
+            to->AddVar(key, value->Clone(nullptr));
         });
 
 
-    return newScript;
+    return to;
 }
 
 void Script::copy(Script * s1, Script * s2)
 {
-    /*s1->SetValue(s2->GetValue());
-    s1->type = s2->type;
-    s1->funcs = s2->funcs;
-    s1->vars = s2->vars;
-    s1->tempFuncs = s2->tempFuncs;
-    s1->cmds = s2->cmds;*/
-    s1 = s2->Clone();
-
-/*
-    for(int i = 0; i < s1->funcs.size(); i++)
-        s1->funcs[i]->parent = s1;
-    for(int i = 0; i < s1->vars.size(); i++)
-        s1->vars[i]->parent = s1;*/
-
-    //for(int i = 0; i < s1->tempFuncs.size(); i++)
-    //    s1->tempFuncs[i]->parent = s1;
+    s2->Clone(s1);
 }
 
 /// ----------------------SCRIPT
@@ -693,15 +692,7 @@ Script * Plus(Script * p1, Script * p2)
 
 Script * Assign(Script * p1, Script * p2)
 {
-    //delete *p1;
-    Log("------------------------HANDLING ASSIGN----------------------------", MessageEasyError);
-    Log((string) + "P1: type = '" + p1->GetType() + "', value = '" + p1->GetValue() + "'", MessageWarning);
-    Log((string) + "P2: type = '" + p2->GetType() + "', value = '" + p2->GetValue() + "'", MessageWarning);
-    Script::copy(p1, p2);
-    Log((string) + "P1: type = '" + p1->GetType() + "', value = '" + p1->GetValue() + "'", MessageWarning);
-    Log((string) + "P2: type = '" + p2->GetType() + "', value = '" + p2->GetValue() + "'", MessageWarning);
-    Log("----------------------CLOSE HANDLING ASSIGN------------------------", MessageEasyError);
-
+    p2->Clone(p1);
     return p1;
 }
 
@@ -723,8 +714,8 @@ Script * Multi(Script * p1, Script * p2)
 Script * Comma(Script * p1, Script * p2)
 {
     Script * result = _global->funcs["array"]->Execute("Array throw comma");
-    result->vars.add((Script *)p1);
-    result->vars.add((Script *)p2);
+    result->AddVar((Script *)p1);
+    result->AddVar((Script *)p2);
     return result;
 }
 
@@ -732,7 +723,7 @@ Script * ArrayPlus(Script * p1, Script * p2)
 {
     Script * result = new Script();
     *result = *p1;
-    result->vars.add(p2);
+    result->AddVar(p2);
     return result;
 }
 
@@ -780,7 +771,7 @@ Script * CountC(Script * self, Script * params)
 Script * CoutParams(Script * self, Script * params)
 {
     //cout << "Size: " << params->vars.size() << "\n";
-    for(int i = 0; i < params->vars.size(); i++)
+    for(unsigned int i = 0; i < params->vars.size(); i++)
         if(params->vars[i]->funcs.count("ToString"))
             cout << params->vars[i]->funcs["ToString"]->Execute(params->vars[i])->GetValue() << "\n";
         else cout << params->vars[i]->GetType() << "\n";
@@ -832,40 +823,34 @@ string GetValue(Script * self)
     return result;
 }
 
-
+#define _type(s) _global->funcs[s]->GetType()
 void InitOperators()
 {
-    operators["="].push_back(make_tuple("null", "null", new Operator(Assign)));
-    operators[","].push_back(make_tuple("null", "null", new Operator(Comma)));
+    operators["="].push_back(make_tuple(_type("null"), _type("null"), new Operator(Assign)));
+    operators[","].push_back(make_tuple(_type("null"), _type("null"), new Operator(Comma)));
 
-    operators["+"].push_back(make_tuple("int", "int", new Operator(Plus)));
-    operators["*"].push_back(make_tuple("int", "int", new Operator(Multi)));
-    operators["-"].push_back(make_tuple("int", "int", new Operator(Minus)));
-    operators["/"].push_back(make_tuple("int", "int", new Operator(Divide)));
+    operators["+"].push_back(make_tuple(_type("int"), _type("int"), new Operator(Plus)));
+    operators["*"].push_back(make_tuple(_type("int"), _type("int"), new Operator(Multi)));
+    operators["-"].push_back(make_tuple(_type("int"), _type("int"), new Operator(Minus)));
+    operators["/"].push_back(make_tuple(_type("int"), _type("int"), new Operator(Divide)));
 
-    operators["+"].push_back(make_tuple("array", "null", new Operator(ArrayPlus)));
+    operators["+"].push_back(make_tuple(_type("array"), _type("null"), new Operator(ArrayPlus)));
 
-    operators["+"].push_back(make_tuple("string", "null", new Operator(StringPlus)));
+    operators["+"].push_back(make_tuple(_type("string"), _type("null"), new Operator(StringPlus)));
 
-    operators["==="].push_back(make_tuple("null", "null", new Operator(EqualsFull)));
+    operators["==="].push_back(make_tuple(_type("null"), _type("null"), new Operator(EqualsFull)));
 
     Operator * eq = new Operator(Equals);
-    operators["=="].push_back(make_tuple("int", "int", eq));
-    operators["=="].push_back(make_tuple("string", "string", eq));
-    operators["=="].push_back(make_tuple("bool", "bool", eq));
+    operators["=="].push_back(make_tuple(_type("int"), _type("int"), eq));
+    operators["=="].push_back(make_tuple(_type("string"), _type("string"), eq));
+    operators["=="].push_back(make_tuple(_type("bool"), _type("bool"), eq));
     //operators["=="].push_back(make_tuple("", "", eq));
 
 }
 
 Script * IntegerToString(Script * self, Script * params)
 {
-    Log("\nIntToString:---------------------------------------------------", MessageEasyError);
-    cout << self->parent->GetType() << " => " << self->parent->GetValue() + "\n";
-    Log(":IntToString---------------------------------------------------\n", MessageEasyError);
-    //cout << self->parent->StackVariables() << "\n~~~";
-
     return _global->funcs["string"]->Execute(self->parent)->SetParent(self->parent);
-
 }
 
 Script * ArrayToString(Script * self, Script * params)
@@ -898,53 +883,55 @@ void Scripting(Script * global)
 {
 
     Script * _null = new Script(nullptr, "null", "null");
-    global->funcs.add("null", _null);
+    global->AddFunc("null", _null);
 
     Script * _int = new Script(nullptr, "int", "0");
         _int->SetConstructor(IntConstructor);
             Script * IntToString = new Script(_int);
             IntToString->SetConstructor(IntegerToString);
         _int->funcs["ToString"] = IntToString;
-    global->funcs.add("int", _int);
+    global->AddFunc("int", _int);
 
     Script * _array = new Script(nullptr, "array", "[]");
         _array->SetConstructor(ArrayConstructor);
             Script * sizeFunc = new Script(_array);
             sizeFunc->SetConstructor(SizeConstructor);
-        _array->funcs.add("size", sizeFunc);
+        _array->AddFunc("size", sizeFunc);
             Script * arrToString = new Script(_array);
             arrToString->SetConstructor(ArrayToString);
-        _array->funcs.add("ToString", arrToString);
-    global->funcs.add("array", _array);
+        _array->AddFunc("ToString", arrToString);
+    global->AddFunc("array", _array);
 
     Script * _string = new Script(nullptr, "string", "");
         _string->SetConstructor(StringConstructor);
             Script * StringToString = new Script(_string);
             StringToString->SetConstructor(ReturnThis);
-        _string->funcs.add("ToString", StringToString);
-    global->funcs.add("string", _string);
+        _string->AddFunc("ToString", StringToString);
+    global->AddFunc("string", _string);
 
     Script * _bool = new Script(nullptr, "bool", "false");
         _bool->SetConstructor(BoolConstructor);
-        _bool->funcs.add("ToString", IntToString);
-    global->funcs.add("bool", _bool);
+        _bool->AddFunc("ToString", IntToString);
+    global->AddFunc("bool", _bool);
 
 
         Script * _count = new Script(nullptr, "func", "CountString");
         _count->SetConstructor(CountC);
-    global->funcs.add("count", _count);
+    global->AddFunc("count", _count);
         Script * _cout = new Script(nullptr, "func", "Cout");
         _cout->SetConstructor(CoutParams);
-    global->funcs.add("cout", _cout);
+    global->AddFunc("cout", _cout);
 
         Script * _ticks = new Script(nullptr, "func", "ticks");
         _ticks->SetConstructor(GetTicks);
-    global->funcs.add("ticks", _ticks);
+        cout << "TICKS COUNT OF FUNCTIONS: " << _ticks->funcs.size() << "...\n";
+    global->AddFunc("ticks", _ticks);
 
     _global = global;
 
     /// Exec\n
     Script * temp(global);
+    InitOperators();
     global->Execute(temp);
 }
 
