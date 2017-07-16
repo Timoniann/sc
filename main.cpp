@@ -100,8 +100,19 @@ void Handler(Script &script)
         cin.getline(str, 256);
         cmd = str;
         if(cmd == "all") { cout << script.StackVariables(); }
-
-        else if (cmd == "exit") break;
+        else if(cmd == "get all scripts"){
+            vector<Script*> scripts = getAllScripts();
+            for(int i = 0; i < scripts.size(); i++){
+                if(scripts[i] == nullptr) cout << "Nullptr\n";
+                else
+                cout << "Type: '"
+                << scripts[i]->GetType()
+                << "'; Value: '"
+                << scripts[i]->GetValue()
+                << "'\n";
+            }
+        }
+        else if(cmd == "exit") break;
     }
 }
 
@@ -110,7 +121,7 @@ int main(int argc, char ** argv)
     system("COLOR F0");
     cout << "Hello, gigach\n";
     SetColor(Black, White);
-    InitOperators();
+
     /*
     Dictionary<string, unsigned int> dic("Hello", 1);
     dic.add("Hello2", 2);

@@ -77,6 +77,11 @@ class Dictionary
             return count;
         }
 
+        KeyType keyOfIndex(int index)
+        {
+            return data[index].first;
+        }
+
         typedef pair<KeyType, ValueType>* iterator;
         typedef const pair<KeyType, ValueType>* const_iterator;
 
