@@ -53,8 +53,6 @@ class Script
 
         Script * GetVariable(string val);
 
-        static void copy(Script * s1, Script * s2);
-
         string type = "";
         string value = "";
     protected:

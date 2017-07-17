@@ -25,6 +25,9 @@
 #define ORDER_CALL_TEMP_FUNC 21
 
 Script * _global;
+
+#define _type(s) _global->funcs[s]->GetType()
+
 /// SCRIPT -----------------------------------
 
 vector<Script*> allScripts;
@@ -634,7 +637,7 @@ string Script::GetType()
 Script * Script::Clone(Script * to)
 {
     if(to == nullptr)
-        to = new Script();
+        Log("ERROR, nullptr in cloning", MessageError);
     to->type = type;
     to->value = value;
     to->cmds = cmds;
@@ -644,20 +647,17 @@ Script * Script::Clone(Script * to)
 
     funcs.foreach([&to](string key, Script * value)
         {
-            to->AddFunc(key, value->Clone(nullptr));
+            Script * c = new Script();
+            to->AddFunc(key, value->Clone(c));
         });
     vars.foreach([&to](string key, Script * value)
         {
-            to->AddVar(key, value->Clone(nullptr));
+            Script * c = new Script();
+            to->AddVar(key, value->Clone(c));
         });
 
 
     return to;
-}
-
-void Script::copy(Script * s1, Script * s2)
-{
-    s2->Clone(s1);
 }
 
 /// ----------------------SCRIPT
@@ -713,9 +713,16 @@ Script * Multi(Script * p1, Script * p2)
 
 Script * Comma(Script * p1, Script * p2)
 {
-    Script * result = _global->funcs["array"]->Execute("Array throw comma");
-    result->AddVar((Script *)p1);
-    result->AddVar((Script *)p2);
+    Script * result = new Script();
+    if(p1->GetType() == _type("array")){
+        p1->Clone(result);
+        result->AddVar(p2);
+        return result;
+    }
+    _global->funcs["array"]->Clone(result);
+    //Script * result = _global->funcs["array"]->Execute("Array throw comma");
+    result->AddVar(p1);
+    result->AddVar(p2);
     return result;
 }
 
@@ -730,8 +737,8 @@ Script * ArrayPlus(Script * p1, Script * p2)
 Script * StringPlus(Script * p1, Script * p2)
 {
     Script * result = new Script();
-    *result = *p1;
-    result->value += p2->funcs["ToString"]->Execute(p2)->GetValue();
+    _global->funcs["string"]->Clone(result);
+    result->value = p1->value + p2->funcs["ToString"]->Execute(p2)->GetValue();
     return result;
 }
 
@@ -742,8 +749,9 @@ Script * IntConstructor(Script * self, Script * params)
 {
     try{
         Script * newInt = new Script();
-        newInt->type = "int";
-        Script::copy(newInt, self);
+
+        _global->funcs["int"]->Clone(newInt);
+
         newInt->SetValue(to_string(stoi(params->GetValue())));
         return newInt;
     } catch(exception e)
@@ -755,8 +763,9 @@ Script * IntConstructor(Script * self, Script * params)
 
 Script * StringConstructor(Script * self, Script * params)
 {
+
     Script * newStr = new Script();
-    Script::copy(newStr, self);
+    _global->funcs["string"]->Clone(newStr);
     newStr->SetValue(params->GetValue());
     //Log((string)"Param of string: type = '" + params->GetType() + "', value = '" + params->GetValue() + "'", MessageWarning );
     return newStr;
@@ -781,15 +790,20 @@ Script * CoutParams(Script * self, Script * params)
 Script * ArrayConstructor(Script * self, Script * params)
 {
     Script * newArray = new Script();
-    Script::copy(newArray, self);
-    newArray->vars = params->vars;
+    _global->funcs["array"]->Clone(newArray);
+
+    params->vars.foreach([&newArray](string key, Script * value)
+        {
+            Script * c = new Script();
+            newArray->AddVar(key, value->Clone(c));
+        });
     return newArray;
 }
 
 Script * BoolConstructor(Script * self, Script * params)
 {
     Script * newBool = new Script();
-    Script::copy(newBool, self);
+    _global->funcs["bool"]->Clone(newBool);
     if(params == nullptr)
         newBool->SetValue("false");
     else if(params->GetType() == "null")
@@ -823,7 +837,6 @@ string GetValue(Script * self)
     return result;
 }
 
-#define _type(s) _global->funcs[s]->GetType()
 void InitOperators()
 {
     operators["="].push_back(make_tuple(_type("null"), _type("null"), new Operator(Assign)));
