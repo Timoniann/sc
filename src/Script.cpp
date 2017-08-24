@@ -647,16 +647,16 @@ Script * Script::Clone(Script * to)
 
     funcs.foreach([&to](string key, Script * value)
         {
-            Script * c = new Script();
-            to->AddFunc(key, value->Clone(c));
+            Script * c = new Script(nullptr, "cloned", "clon");
+            value->Clone(c);
+            to->AddFunc(key, c);
         });
     vars.foreach([&to](string key, Script * value)
         {
-            Script * c = new Script();
-            to->AddVar(key, value->Clone(c));
+            Script * c = new Script(nullptr, "cloned", "clon");
+            value->Clone(c);
+            to->AddVar(key, c);
         });
-
-
     return to;
 }
 
@@ -713,16 +713,20 @@ Script * Multi(Script * p1, Script * p2)
 
 Script * Comma(Script * p1, Script * p2)
 {
+    int a = allScripts.size();
     Script * result = new Script();
     if(p1->GetType() == _type("array")){
         p1->Clone(result);
         result->AddVar(p2);
         return result;
     }
+    a = allScripts.size();
     _global->funcs["array"]->Clone(result);
+    a = allScripts.size();
     //Script * result = _global->funcs["array"]->Execute("Array throw comma");
     result->AddVar(p1);
     result->AddVar(p2);
+    a = allScripts.size();
     return result;
 }
 
@@ -900,24 +904,24 @@ void Scripting(Script * global)
 
     Script * _int = new Script(nullptr, "int", "0");
         _int->SetConstructor(IntConstructor);
-            Script * IntToString = new Script(_int);
+            Script * IntToString = new Script(_int, "function", "IntToString");
             IntToString->SetConstructor(IntegerToString);
         _int->funcs["ToString"] = IntToString;
     global->AddFunc("int", _int);
 
     Script * _array = new Script(nullptr, "array", "[]");
         _array->SetConstructor(ArrayConstructor);
-            Script * sizeFunc = new Script(_array);
+            Script * sizeFunc = new Script(_array, "function", "size");
             sizeFunc->SetConstructor(SizeConstructor);
         _array->AddFunc("size", sizeFunc);
-            Script * arrToString = new Script(_array);
+            Script * arrToString = new Script(_array, "function", "ArrayToString");
             arrToString->SetConstructor(ArrayToString);
         _array->AddFunc("ToString", arrToString);
     global->AddFunc("array", _array);
 
     Script * _string = new Script(nullptr, "string", "");
         _string->SetConstructor(StringConstructor);
-            Script * StringToString = new Script(_string);
+            Script * StringToString = new Script(_string, "function", "ToString");
             StringToString->SetConstructor(ReturnThis);
         _string->AddFunc("ToString", StringToString);
     global->AddFunc("string", _string);
@@ -937,7 +941,6 @@ void Scripting(Script * global)
 
         Script * _ticks = new Script(nullptr, "func", "ticks");
         _ticks->SetConstructor(GetTicks);
-        cout << "TICKS COUNT OF FUNCTIONS: " << _ticks->funcs.size() << "...\n";
     global->AddFunc("ticks", _ticks);
 
     _global = global;

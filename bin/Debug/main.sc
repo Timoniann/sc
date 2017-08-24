@@ -2,11 +2,13 @@
 cout("Object testing");
 type Object(){
 	stop = false;
+	cout("Stop value: " + stop);
 }
 
 main = "Hello, i am main";
 
 ob = Object();
+
 if(2 == 2) {
 	cout("Kakaka");
 	cout(main);

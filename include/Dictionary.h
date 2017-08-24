@@ -21,6 +21,7 @@ class Dictionary
         ValueType & add(KeyType key, ValueType value)
         {
             data.push_back(make_pair(key, value));
+            return data[data.size() - 1].second;
             return data.back().second;
         }
 
@@ -33,6 +34,7 @@ class Dictionary
         ValueType & add(ValueType value)
         {
             data.push_back(make_pair("", value));
+            return data[data.size() - 1].second;
             return data.back().second;
         }
 

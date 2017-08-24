@@ -88,7 +88,7 @@
 1499612826 source:e:\projects\c++\sc\src\basic.cpp
 	<basic.h>
 
-1500277970 source:e:\projects\c++\sc\src\script.cpp
+1503553302 source:e:\projects\c++\sc\src\script.cpp
 	"Script.h"
 	<basic.h>
 	<algorithm>
@@ -127,7 +127,7 @@
 1498762367 source:e:\projects\c++\sc\src\dictionary.cpp
 	"Dictionary.h"
 
-1500228263 e:\projects\c++\sc\include\dictionary.h
+1500281141 e:\projects\c++\sc\include\dictionary.h
 	<vector>
 	<iterator>
 	<functional>
