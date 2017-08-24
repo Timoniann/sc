@@ -23,6 +23,7 @@
 #define ORDER_PUSH_IF 19
 #define ORDER_PUSH_ELSE 20
 #define ORDER_CALL_TEMP_FUNC 21
+#define ORDER_PUSH_DOT 22
 
 Script * _global;
 
@@ -76,6 +77,7 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
     vector<string> type_params;
     int last = NOTHING;
     int modify = NOTHING;
+    bool doted = false;
     string path = "";
     vector<bool> brackets;
 
@@ -137,9 +139,13 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
             }
             else{
                 if(c == '.') {
-                    if(last == LETTER)
+                    if(last == LETTER || last == NEW_TYPE || last == OPERATOR)
                     {
-                        path += c;
+                        if(path != "") triple.push_back(make_tuple(ORDER_PUSH_VAL, path, i));
+                        triple.push_back(make_tuple(ORDER_PUSH_DOT, (string)"" + c, i));
+                        doted = true;
+                        //path += c;
+                        path = "";
                         last = DOT;
                         continue;
                     }
@@ -200,16 +206,19 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                     if(brackets.back()) triple.push_back(make_tuple(ORDER_PUSH_OP, (string)"" + c, i));
                     else
                         if(last == OPEN_FUNC) triple.push_back(make_tuple(ORDER_CALL_FUNC_WITHOUT_PARAMS, (string)"" + c, i));
-                        else { triple.push_back(make_tuple(ORDER_CALL_FUNC, (string)"" + c, i)); last = LETTER; brackets.pop_back(); continue; }
+                        else { triple.push_back(make_tuple(ORDER_CALL_FUNC, (string)"" + c, i)); last = LETTER; brackets.pop_back(); path = ""; continue; }
                     brackets.pop_back();
+                    path = "";
                 }
                 else if(c == ';')// && triple.size() > 0
                 {
+                    //cout << "BACK: " << get<1>(triple.back());
                     cout << "\n";
                     cmds.push_back(triple);
                     triple.clear();
                     last = NOTHING;
                     modify = NOTHING;
+                    doted = false;
                     continue;
                 }
                 else if(c == '/' && strs[i][j + 1] == '/')
@@ -232,7 +241,7 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         if(newScriptName == "") {
                             Log("Name of new script is empty", MessageEasyError, i);
                         }
-                        Script * newScript = new Script(this, newScriptName, "Compiled new script");
+                        Script * newScript = new Script(this, newScriptName, newScriptName);
                         j++;
                         //triple.push_back(make_tuple(ORDER_PUSH_TYPE, newScriptName, i));
                         newScript->Handler(strs, i, j);
@@ -291,7 +300,6 @@ Script * Script::FuncToExecute(string funcName)
 
 Script * Script::Execute(Script * parameters)
 {
-
     if(constructor != nullptr)
         return constructor(this, parameters);
 
@@ -313,16 +321,19 @@ Script * Script::Execute(Script * parameters)
         vector<string> pointers;
         string newValue = "";
         vector<string> funcsToCall;
+        bool doted = false;
         for(unsigned int j = 0; j < cmd.size(); j++)
         {
             auto t = cmd[j];
+            string stt = get<1>(t);
             switch(std::get<0>(t))
             {
             case ORDER_PUSH_NUMBER:
                 st.push_back(_global->funcs["int"]->Execute(get<1>(t))->SetParent(this));
                 break;
             case ORDER_PUSH_FUNC:
-                funcsToCall.push_back(get<1>(t));
+                if(doted) { funcsToCall.push_back("." + get<1>(t)); doted = false; }
+                else funcsToCall.push_back(get<1>(t));
                 op.push_back("//");
                 break;
             case ORDER_CALL_FUNC:
@@ -333,55 +344,30 @@ Script * Script::Execute(Script * parameters)
                         break;
                     }
                     Script * prms = nullptr;
-                    if(op.back() == "//") { // 1 param
-                        cout << "Calling function with 1 parameter\n";
-                        while (op.back() != "//"){
-                            if(op.size() == 0) {
-                                Log("Syntax error. Cannot call function with parameters", MessageError, get<2>(t));
-                                break;
-                            }
-                            process_op (st, op.back());
-                            op.pop_back();
+
+                    //Log("Calling function with parameters");
+                    while (op.back() != "//"){
+                        if(op.size() == 0) {
+                            Log("Syntax error. Cannot call function with parameters", MessageError, get<2>(t));
+                            break;
                         }
+                        process_op (st, op.back());
                         op.pop_back();
-                        prms = st.back();
-                        if(prms->GetType() != "array"){
-                            Script * arr = _global->funcs["array"]->Execute("Param to array");
-                            arr->AddVar(prms);
-                            prms = arr;
-                        }
                     }
-                    else { // more params
-                        while (op.back() != "//"){
-                            if(op.size() == 0) {
-                                Log("Syntax error. Cannot call function with parameters", MessageError, get<2>(t));
-                                break;
-                            }
-                            if(op.back() == "(") { op.pop_back(); continue; }
-                            process_op (st, op.back());
-                            op.pop_back();
-                        }
-                        op.pop_back();
-                        prms = st.back();
-                        if(prms->GetType() != "array"){
-                            Script * arr = _global->funcs["array"]->Execute("Param to array");
-                            arr->AddVar(prms);
-                            prms = arr;
-                        }
+                    op.pop_back();
+                    prms = st.back();
+                    if(prms->GetType() != "array"){
+                        Script * arr = _global->funcs["array"]->Execute("Param to array");
+                        arr->AddVar(prms);
+                        prms = arr;
                     }
+
                     Script * toExe = FuncToExecute(funcsToCall.back());
                     if(toExe == nullptr)
                         Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
                     else
                         st.push_back(toExe->Execute(prms)->SetParent(this));
-                    /*if(funcs.count(funcsToCall.back()))
-                        st.push_back(funcs[funcsToCall.back()]->Execute(prms));
-                    else if(vars.count(funcsToCall.back())){
-                            cout << "Executing variable\n";
-                            st.push_back(vars[funcsToCall.back()]->Execute(prms));
-                        }
-                        else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
-                    */funcsToCall.pop_back();
+                    funcsToCall.pop_back();
                 }
                 break;
             case ORDER_CALL_FUNC_WITHOUT_PARAMS:
@@ -391,9 +377,19 @@ Script * Script::Execute(Script * parameters)
                         break;
                     }
                     if(op.back() == "//") {
-                        cout << "Calling function without parameters\n";
-                        if(funcs.count(funcsToCall.back()))
-                            st.push_back(funcs[funcsToCall.back()]->Execute(_global->funcs["array"]->Execute("CFWOP"))->SetParent(this));
+                        //cout << "Calling function without parameters\n";
+                        Script * toExe = nullptr;
+
+                        if(funcsToCall.back()[0] == '.') {
+                            if(st.size() == 0) {
+                                Log("Surplus operator '.'", MessageError, get<2>(t));
+                                toExe = FuncToExecute(funcsToCall.back());
+                            }
+                            else toExe = st.back()->FuncToExecute(funcsToCall.back().substr(1));
+                        }
+                        else toExe = FuncToExecute(funcsToCall.back());
+                        if(toExe != nullptr)
+                            st.push_back(toExe->Execute(_global->funcs["array"]->Execute("CFWOP"))->SetParent(this));
                         else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
                         op.pop_back();
                         funcsToCall.pop_back();
@@ -408,7 +404,13 @@ Script * Script::Execute(Script * parameters)
                 //funcs[get<1>(t)]->Execute(get<2>(t));
                 break;
             case ORDER_PUSH_VAL:
-                st.push_back(GetVariable(get<1>(t))->SetParent(this));
+                if(doted) {
+                    Script * last = st.back();
+                    st.pop_back();
+                    st.push_back(last->GetVariable(get<1>(t)));
+                    doted = false;
+                }
+                else st.push_back(GetVariable(get<1>(t)));
                 break;
             case ORDER_PUSH_BOOL:
                 st.push_back(_global->funcs["bool"]->Execute(get<1>(t))->SetParent(this));
@@ -416,7 +418,7 @@ Script * Script::Execute(Script * parameters)
             case ORDER_PUSH_OP:
                 {
                     string oper = get<1>(t);
-                    cout << "Op: " << oper << '\n';
+                    //cout << "Op: " << oper << '\n';
                     if(oper == "(") { op.push_back (oper); }
                     else if (oper == ")") {
                         while (op.back() != "(" && op.back() != "//"){
@@ -432,6 +434,9 @@ Script * Script::Execute(Script * parameters)
                         op.push_back (oper);
                     }
                 }
+                break;
+            case ORDER_PUSH_DOT:
+                doted = true;
                 break;
             case ORDER_PUSH_IF:
                 if(st.size() == 0) Log("'If' don't have condition", MessageError, get<2>(t));
@@ -609,12 +614,13 @@ void Script::process_op (vector<Script *> & st, string op)
 
 Script * Script::GetVariable(string val)
 {
+    if(val == "this") return parent;
+    if(val == "self") return this;
     //if(vars.count(val)) return vars[val];
-
     Script * v = FuncToExecute(val);
     if(v == nullptr){
         Log("Creating... (" + val + ")", MessageWarning);
-        AddVar(val, new Script(this, "null", ""));
+        AddVar(val, new Script(this, "null", ""))->SetParent(this);
         return vars[val];
     } else return v;
 }
@@ -742,7 +748,10 @@ Script * StringPlus(Script * p1, Script * p2)
 {
     Script * result = new Script();
     _global->funcs["string"]->Clone(result);
-    result->value = p1->value + p2->funcs["ToString"]->Execute(p2)->GetValue();
+    if(p2->funcs.count("ToString"))
+        result->value = p1->value + p2->funcs["ToString"]->Execute(p2)->GetValue();
+    else
+        result->value = p1->value + p2->GetType();
     return result;
 }
 
