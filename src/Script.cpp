@@ -964,3 +964,10 @@ vector<Script*> & getAllScripts()
 {
     return allScripts;
 }
+
+void DeleteAllScripts(){
+    for(int i = 0; i < allScripts.size(); i++){
+        delete allScripts[i];
+    }
+    allScripts.clear();
+}

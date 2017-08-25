@@ -82,4 +82,6 @@ void Scripting(Script * global);
 
 vector<Script*> & getAllScripts();
 
+void DeleteAllScripts();
+
 #endif // SCRIPT_H

@@ -4,6 +4,8 @@
 #include <Script.h>
 #include <basic.h>
 
+char * scriptPath;
+
 void ClearSpaces(string & str, unsigned int position = 0)
 {
     while(position < str.size())
@@ -83,23 +85,24 @@ void ZeroMemory(char * str, int size)
         str[i] = '\0';
 }*/
 
-void Handler(Script &script)
+void Handler(Script * script)
 {
     string cmd;
     char str[256];
 
     vector<Script*> p;
     Log("\nHandle........................................\n");
-    Scripting(&script);
+    Scripting(script);
     Log("\nClosed........................................\n");
     //cout << "Exit with status: " << script.Execute(p)->GetValue() << "\n";
-    cout << "You can write 'exit' or other script's commands ('all')\n";
+    //cout << "You can write 'exit' or other script's commands ('all')\n";
     while(true)
     {
+        cout << "You can write 'exit' or other script's commands ('all')\n";
         ZeroMemory(str, 256);
         cin.getline(str, 256);
         cmd = str;
-        if(cmd == "all") { cout << script.StackVariables(); }
+        if(cmd == "all") { cout << script->StackVariables(); }
         else if(cmd == "get all scripts"){
             vector<Script*> scripts = getAllScripts();
             for(int i = 0; i < scripts.size(); i++){
@@ -111,6 +114,11 @@ void Handler(Script &script)
                 << scripts[i]->GetValue()
                 << "'\n";
             }
+        }
+        else if(cmd == "reload"){
+            DeleteAllScripts();
+            script = (ReadScript(scriptPath));;
+            Scripting(script);
         }
         else if(cmd == "exit") break;
     }
@@ -128,11 +136,11 @@ int main(int argc, char ** argv)
     dic.foreachReverse([](string key, unsigned int value){cout << key; cout << value;});
     return 0;*/
     Init();
-    if (argc == 1) argv[1] = "bin/Debug/main.sc";
-    {
-        Script * s = ReadScript(argv[1]);
-        Handler(*s);
-    }
+    scriptPath = (char*)"bin/Debug/main.sc";
+    if (argc > 1) scriptPath = argv[1];
+
+    Handler(ReadScript(scriptPath));
+
     cout << "Closed\n";
     return 0;
 }
