@@ -10,7 +10,7 @@ void Log(string text, MESSAGE_TYPE msg_type, unsigned int line, int error_code)
 {
     if(msg_type == MessagePlain)
         SetColor(msg_type, White);
-    else SetColor(msg_type, LightBlue);
+    else SetColor(msg_type, Yellow);
     cout << text;
     if(line > 0) cout << " in line " << line + 1;
     cout << "\n";

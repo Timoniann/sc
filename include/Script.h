@@ -51,7 +51,7 @@ class Script
         void SetParams(Script * params);
 
         string GetType();
-        string StackVariables();
+        string StackVariables(unsigned int tc = 0);
 
         Script * GetVariable(string val);
 

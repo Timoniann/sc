@@ -36,7 +36,7 @@ enum ConsoleColor
 enum MESSAGE_TYPE
 {
     MessageError = Red,
-    MessageWarning = Yellow,
+    MessageWarning = Brown,
     MessagePlain = Black,
     MessageEasyError = Cyan,
     MessageUnhandled = DarkGray
