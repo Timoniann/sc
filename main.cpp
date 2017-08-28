@@ -117,8 +117,12 @@ void Handler(Script * script)
         }
         else if(cmd == "reload"){
             DeleteAllScripts();
+            InitGlobal();
             script = (ReadScript(scriptPath));;
             Scripting(script);
+        }
+        else if(cmd == "clear"){
+            DeleteAllScripts();
         }
         else if(cmd == "exit") break;
     }
@@ -136,6 +140,7 @@ int main(int argc, char ** argv)
     dic.foreachReverse([](string key, unsigned int value){cout << key; cout << value;});
     return 0;*/
     Init();
+    InitGlobal();
     scriptPath = (char*)"bin/Debug/main.sc";
     if (argc > 1) scriptPath = argv[1];
 

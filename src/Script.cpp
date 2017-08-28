@@ -25,9 +25,12 @@
 #define ORDER_CALL_TEMP_FUNC 21
 #define ORDER_PUSH_DOT 22
 
-Script * _global;
-
-#define _type(s) _global->funcs[s]->GetType()
+//Script * _global;
+Script  * _null,
+        * _int,
+        * _string,
+        * _bool,
+        * _array;
 
 /// SCRIPT -----------------------------------
 
@@ -68,6 +71,8 @@ Script::Script(Script* (* func)(Script * self, Script * params)) : Script()
 #define IF 10
 #define IF_OPEN 11
 #define ELSE 12
+#define RETURN 13
+#define TYPE_PUSHED_PARAM 14
 
 
 void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
@@ -124,12 +129,18 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         continue;
                     }
                     else if(last == MODIFICATOR) {
-                            //triple.push_back(make_tuple(ORDER_PUSH_TYPE, word, i));
-                            newScriptName = word;
-                            last = NEW_TYPE;
-                            continue;
-                        }
+                        //triple.push_back(make_tuple(ORDER_PUSH_TYPE, word, i));
+                        newScriptName = word;
+                        last = NEW_TYPE;
+                        continue;
+                    }
                     else if(last == TYPE_PUSH_PARAMS){
+                        type_params.push_back(word);
+                        last = TYPE_PUSHED_PARAM;
+                        continue;
+                    }
+                    else if (last == TYPE_PUSHED_PARAM){
+                        Log("Need symbol ','", MessageEasyError, j);
                         type_params.push_back(word);
                         continue;
                     }
@@ -186,7 +197,7 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                 }
                 if(c == ')')
                 {
-                    if(last == TYPE_PUSH_PARAMS)
+                    if(last == TYPE_PUSH_PARAMS || last == TYPE_PUSHED_PARAM)
                     {
                         last = NEW_TYPE;
                         continue;
@@ -200,7 +211,7 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                                 last = NOTHING;
                                 //modify = NOTHING;
                         }
-                        else Log("Syntax error. Wrong using operator ')'", MessageEasyError, i);
+                        else Log("Syntax error. Wrong using operator ')'" + to_string(last), MessageEasyError, i);
                         continue;
                     }
                     if(brackets.back()) triple.push_back(make_tuple(ORDER_PUSH_OP, (string)"" + c, i));
@@ -242,16 +253,22 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                             Log("Name of new script is empty", MessageEasyError, i);
                         }
                         Script * newScript = new Script(this, newScriptName, newScriptName);
+                        Script * par = new Script();
+                        _array->Clone(par);
+                        for(auto it = type_params.begin(); it != type_params.end(); it++){
+                            //par->AddVar((*it), new Script(this, "null", "null"));
+                        }
+
+                        //newScript->SetParams(par);
                         j++;
                         //triple.push_back(make_tuple(ORDER_PUSH_TYPE, newScriptName, i));
                         newScript->Handler(strs, i, j);
                         str = strs[i];
-                        Log("HANDLED!", MessageWarning, i);
                         AddFunc(newScriptName, newScript);
                         continue;
                     }
                     else {
-                        Script * newScript = new Script(this, "temporary", "TemporaryFunction");
+                        Script * newScript = new Script(this, "Temporary", "TempFunc");
                         j++;
                         newScript->Handler(strs, i, j);
                         str = strs[i];
@@ -274,6 +291,10 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                 }
                 else if(c == '[') Log((string)"Unhandled operator '" + c + "'", MessageWarning);
                 else if(c == ']') Log((string)"Unhandled operator '" + c + "'", MessageWarning);
+                else if(c == ',' && last == TYPE_PUSHED_PARAM){
+                    last = TYPE_PUSH_PARAMS;
+                    continue;
+                }
                 else { triple.push_back(make_tuple(ORDER_PUSH_OP, readOperator(str, j), i)); }
                 last = OPERATOR;
 
@@ -287,6 +308,7 @@ Script * Script::FuncToExecute(string funcName)
 {
     if(funcName == "this") return parent;
     if(funcName == "self") return this;
+    //if(params.contains(funcName));
     Script * current = this;
     while(current){
         if(current->funcs.count(funcName))
@@ -302,6 +324,19 @@ Script * Script::Execute(Script * parameters)
 {
     if(constructor != nullptr)
         return constructor(this, parameters);
+    int iter = 0;
+    params = new Script(this);
+    _array->Clone(params);
+    for(auto it = parameters->vars.begin(); it != parameters->vars.end(); it++){
+        if(params->vars.size() > iter) params->vars[iter++] = (*it).second;
+        else params->AddVar((*it).second);
+    }
+    //if(params == nullptr) params = new Script(this, "null", "null");
+    vars["params"] = params;
+    //if(vars.count("params")) vars["params"] = params;
+    //else AddVar("params", params);
+
+    //for(mass::iterator it = t.begin(); it != t.end(); it++)
 
     cout << "Start view\n";
     cout << cmds.size() << " - size\n";
@@ -329,7 +364,7 @@ Script * Script::Execute(Script * parameters)
             switch(std::get<0>(t))
             {
             case ORDER_PUSH_NUMBER:
-                st.push_back(_global->funcs["int"]->Execute(get<1>(t))->SetParent(this));
+                st.push_back(_int->Execute(get<1>(t))->SetParent(this));
                 break;
             case ORDER_PUSH_FUNC:
                 if(doted) { funcsToCall.push_back("." + get<1>(t)); doted = false; }
@@ -356,17 +391,38 @@ Script * Script::Execute(Script * parameters)
                     }
                     op.pop_back();
                     prms = st.back();
+                    //st.pop_back();
                     if(prms->GetType() != "array"){
-                        Script * arr = _global->funcs["array"]->Execute("Param to array");
+                        Script * arr = _array->Execute("Param to array");
                         arr->AddVar(prms);
                         prms = arr;
                     }
 
-                    Script * toExe = FuncToExecute(funcsToCall.back());
+                    Script * toExe = nullptr;
+                    if(funcsToCall.back()[0] == '.') {
+                        if(st.size() == 0) {
+                            Log("Surplus operator '.'", MessageError, get<2>(t));
+                            toExe = FuncToExecute(funcsToCall.back());
+                        }
+                        else {
+
+                            toExe = st.back()->FuncToExecute(funcsToCall.back().substr(1));
+                            st.pop_back();
+                            st.push_back(toExe->Copy()->Execute(_array->Execute("CFWOP"))->SetParent(this));
+                            //st.push_back(toExe->Execute(prms)->SetParent(this));
+                            funcsToCall.pop_back();
+                            continue;
+                        }
+                    }
+                    else toExe = FuncToExecute(funcsToCall.back());
+
                     if(toExe == nullptr)
-                        Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
+                        if(funcsToCall.back()[0] == '.' && st.size() > 0)
+                            Log("Object '" + st.back()->GetType() + "' does not have function '" + funcsToCall.back().substr(1) + "'", MessageEasyError, get<2>(t));
+                        else
+                            Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
                     else
-                        st.push_back(toExe->Execute(prms)->SetParent(this));
+                        st.push_back(toExe->Copy()->Execute(prms)->SetParent(this));
                     funcsToCall.pop_back();
                 }
                 break;
@@ -385,11 +441,14 @@ Script * Script::Execute(Script * parameters)
                                 Log("Surplus operator '.'", MessageError, get<2>(t));
                                 toExe = FuncToExecute(funcsToCall.back());
                             }
-                            else toExe = st.back()->FuncToExecute(funcsToCall.back().substr(1));
+                            else {
+                                toExe = st.back()->FuncToExecute(funcsToCall.back().substr(1));
+                                st.pop_back();
+                            }
                         }
                         else toExe = FuncToExecute(funcsToCall.back());
                         if(toExe != nullptr)
-                            st.push_back(toExe->Execute(_global->funcs["array"]->Execute("CFWOP"))->SetParent(this));
+                            st.push_back(toExe->Copy()->Execute(_array->Execute("CFWOP"))->SetParent(this));
                         else Log("Object '" + GetType() + "' does not have function '" + funcsToCall.back() + "'", MessageEasyError, get<2>(t));
                         op.pop_back();
                         funcsToCall.pop_back();
@@ -413,7 +472,7 @@ Script * Script::Execute(Script * parameters)
                 else st.push_back(GetVariable(get<1>(t)));
                 break;
             case ORDER_PUSH_BOOL:
-                st.push_back(_global->funcs["bool"]->Execute(get<1>(t))->SetParent(this));
+                st.push_back(_bool->Execute(get<1>(t))->SetParent(this));
                 break;
             case ORDER_PUSH_OP:
                 {
@@ -436,6 +495,8 @@ Script * Script::Execute(Script * parameters)
                 }
                 break;
             case ORDER_PUSH_DOT:
+                //Log("TYPE: " + st.back()->GetType(), MessageError, get<2>(t));
+
                 doted = true;
                 break;
             case ORDER_PUSH_IF:
@@ -473,10 +534,10 @@ Script * Script::Execute(Script * parameters)
             case ORDER_PUSH_PARAM:
                 break;
             case ORDER_PUSH_STR:
-                st.push_back(_global->funcs["string"]->Execute(get<1>(t))->SetParent(this));
+                st.push_back(_string->Execute(get<1>(t))->SetParent(this));
                 break;
             case ORDER_CALL_TEMP_FUNC:
-                st.push_back(tempFuncs[atoi(get<1>(t).c_str())]->Execute("")->SetParent(this));
+                st.push_back(tempFuncs[atoi(get<1>(t).c_str())]->Copy()->Execute("")->SetParent(this));
                 break;
             default:
                 Log("Invalid order (" + to_string(get<0>(t)) + ")", MessageError, get<2>(t));
@@ -539,7 +600,7 @@ string Script::StackVariables()
         if(p.second != nullptr){
             if(p.second->funcs.count("ToString")){
                 Script * toS = p.second->funcs["ToString"];
-                result += p.first + " = " + toS->Execute(p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
+                result += p.first + " = " + toS->Copy()->Execute(p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
             }
             else {
                 result += p.first + ": {\n" + p.second->StackVariables() + "\n}";
@@ -552,7 +613,7 @@ string Script::StackVariables()
         if(p.second != nullptr){
             if(p.second->funcs.count("ToString")){
                 Script * toS = p.second->funcs["ToString"];
-                result += p.first + " = " + toS->Execute(p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
+                result += p.first + " = " + toS->Copy()->Execute(p.second)->GetValue() + " (" + p.second->GetType() + ")\n";
             }
             else {
                 result += p.first + ": {\n" + p.second->StackVariables() + "}\n";
@@ -582,6 +643,8 @@ void Script::process_op (vector<Script *> & st, string op)
 
     if(operators.count(op) > 0)
     {
+
+        //Need operators Copy()
         typedef vector<tuple<string, string, Operator*>> mass;
         mass & t = operators[op];
         for(mass::iterator it = t.begin(); it != t.end(); it++)
@@ -640,6 +703,25 @@ string Script::GetType()
     return type;
 }
 
+Script * Script::Copy()
+{
+    Script * result = new Script();
+    result->type = type;
+    result->value = value;
+    result->cmds = cmds;
+    result->params = params;
+    result->tempFuncs = tempFuncs;
+    result->constructor = constructor;
+    result->parent = parent;
+
+    funcs.foreach([&result](string key, Script * value)
+        {
+            result->AddFunc(key, value->Copy());
+        });
+
+    return result;
+}
+
 Script * Script::Clone(Script * to)
 {
     if(to == nullptr)
@@ -650,6 +732,8 @@ Script * Script::Clone(Script * to)
     to->params = params;
     to->tempFuncs = tempFuncs;
     to->constructor = constructor;
+    to->funcs.clear();
+    to->vars.clear();
 
     funcs.foreach([&to](string key, Script * value)
         {
@@ -664,6 +748,11 @@ Script * Script::Clone(Script * to)
             to->AddVar(key, c);
         });
     return to;
+}
+
+void Script::SetParams(Script * params)
+{
+    this->params = params;
 }
 
 /// ----------------------SCRIPT
@@ -683,17 +772,17 @@ Script * Operator::Execute(Script * p1, Script * p2)
 
 Script * Minus(Script * p1, Script * p2)
 {
-    return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) - stoi(p2->GetValue())));
+    return _int->Execute(to_string(stoi(p1->GetValue()) - stoi(p2->GetValue())));
 }
 
 Script * Divide(Script * p1, Script * p2)
 {
-    return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) / stoi(p2->GetValue())));
+    return _int->Execute(to_string(stoi(p1->GetValue()) / stoi(p2->GetValue())));
 }
 
 Script * Plus(Script * p1, Script * p2)
 {
-    return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) + stoi(p2->GetValue())));
+    return _int->Execute(to_string(stoi(p1->GetValue()) + stoi(p2->GetValue())));
 }
 
 Script * Assign(Script * p1, Script * p2)
@@ -704,30 +793,30 @@ Script * Assign(Script * p1, Script * p2)
 
 Script * EqualsFull(Script * p1, Script * p2)
 {
-    return _global->funcs["bool"]->Execute(to_string(p1 == p2));
+    return _bool->Execute(to_string(p1 == p2));
 }
 
 Script * Equals(Script * p1, Script * p2)
 {
-    return _global->funcs["bool"]->Execute(to_string(p1->GetValue() == p2->GetValue()));
+    return _bool->Execute(to_string(p1->GetValue() == p2->GetValue()));
 }
 
 Script * Multi(Script * p1, Script * p2)
 {
-    return _global->funcs["int"]->Execute(to_string(stoi(p1->GetValue()) * stoi(p2->GetValue())));
+    return _int->Execute(to_string(stoi(p1->GetValue()) * stoi(p2->GetValue())));
 }
 
 Script * Comma(Script * p1, Script * p2)
 {
     int a = allScripts.size();
     Script * result = new Script();
-    if(p1->GetType() == _type("array")){
+    if(p1->GetType() == _array->GetType()){
         p1->Clone(result);
         result->AddVar(p2);
         return result;
     }
     a = allScripts.size();
-    _global->funcs["array"]->Clone(result);
+    _array->Clone(result);
     a = allScripts.size();
     //Script * result = _global->funcs["array"]->Execute("Array throw comma");
     result->AddVar(p1);
@@ -747,9 +836,9 @@ Script * ArrayPlus(Script * p1, Script * p2)
 Script * StringPlus(Script * p1, Script * p2)
 {
     Script * result = new Script();
-    _global->funcs["string"]->Clone(result);
+    _string->Clone(result);
     if(p2->funcs.count("ToString"))
-        result->value = p1->value + p2->funcs["ToString"]->Execute(p2)->GetValue();
+        result->value = p1->value + p2->funcs["ToString"]->Copy()->Execute(p2)->GetValue();
     else
         result->value = p1->value + p2->GetType();
     return result;
@@ -763,7 +852,7 @@ Script * IntConstructor(Script * self, Script * params)
     try{
         Script * newInt = new Script();
 
-        _global->funcs["int"]->Clone(newInt);
+        _int->Clone(newInt);
 
         newInt->SetValue(to_string(stoi(params->GetValue())));
         return newInt;
@@ -778,7 +867,10 @@ Script * StringConstructor(Script * self, Script * params)
 {
 
     Script * newStr = new Script();
-    _global->funcs["string"]->Clone(newStr);
+    _string->Clone(newStr);
+    //if(params->GetType() == _array->GetType())
+    //    if(params->vars.size())
+    //        newStr->SetValue(params->vars[0]->GetValue());
     newStr->SetValue(params->GetValue());
     //Log((string)"Param of string: type = '" + params->GetType() + "', value = '" + params->GetValue() + "'", MessageWarning );
     return newStr;
@@ -795,7 +887,7 @@ Script * CoutParams(Script * self, Script * params)
     //cout << "Size: " << params->vars.size() << "\n";
     for(unsigned int i = 0; i < params->vars.size(); i++)
         if(params->vars[i]->funcs.count("ToString"))
-            cout << params->vars[i]->funcs["ToString"]->Execute(params->vars[i])->GetValue() << "\n";
+            cout << params->vars[i]->funcs["ToString"]->Copy()->Execute(params->vars[i])->GetValue() << "\n";
         else cout << params->vars[i]->GetType() << "\n";
     return new Script(nullptr, "null", "null");
 }
@@ -803,7 +895,7 @@ Script * CoutParams(Script * self, Script * params)
 Script * ArrayConstructor(Script * self, Script * params)
 {
     Script * newArray = new Script();
-    _global->funcs["array"]->Clone(newArray);
+    _array->Clone(newArray);
 
     params->vars.foreach([&newArray](string key, Script * value)
         {
@@ -816,7 +908,7 @@ Script * ArrayConstructor(Script * self, Script * params)
 Script * BoolConstructor(Script * self, Script * params)
 {
     Script * newBool = new Script();
-    _global->funcs["bool"]->Clone(newBool);
+    _bool->Clone(newBool);
     if(params == nullptr)
         newBool->SetValue("false");
     else if(params->GetType() == "null")
@@ -852,41 +944,41 @@ string GetValue(Script * self)
 
 void InitOperators()
 {
-    operators["="].push_back(make_tuple(_type("null"), _type("null"), new Operator(Assign)));
-    operators[","].push_back(make_tuple(_type("null"), _type("null"), new Operator(Comma)));
+    operators["="].push_back(make_tuple(_null->GetType(), _null->GetType(), new Operator(Assign)));
+    operators[","].push_back(make_tuple(_null->GetType(), _null->GetType(), new Operator(Comma)));
 
-    operators["+"].push_back(make_tuple(_type("int"), _type("int"), new Operator(Plus)));
-    operators["*"].push_back(make_tuple(_type("int"), _type("int"), new Operator(Multi)));
-    operators["-"].push_back(make_tuple(_type("int"), _type("int"), new Operator(Minus)));
-    operators["/"].push_back(make_tuple(_type("int"), _type("int"), new Operator(Divide)));
+    operators["+"].push_back(make_tuple(_int->GetType(), _int->GetType(), new Operator(Plus)));
+    operators["*"].push_back(make_tuple(_int->GetType(), _int->GetType(), new Operator(Multi)));
+    operators["-"].push_back(make_tuple(_int->GetType(), _int->GetType(), new Operator(Minus)));
+    operators["/"].push_back(make_tuple(_int->GetType(), _int->GetType(), new Operator(Divide)));
 
-    operators["+"].push_back(make_tuple(_type("array"), _type("null"), new Operator(ArrayPlus)));
+    operators["+"].push_back(make_tuple(_array->GetType(), _null->GetType(), new Operator(ArrayPlus)));
 
-    operators["+"].push_back(make_tuple(_type("string"), _type("null"), new Operator(StringPlus)));
+    //operators["+"].push_back(make_tuple(_string->GetType(), _null->GetType(), new Operator(StringPlus)));
 
-    operators["==="].push_back(make_tuple(_type("null"), _type("null"), new Operator(EqualsFull)));
+    operators["==="].push_back(make_tuple(_null->GetType(), _null->GetType(), new Operator(EqualsFull)));
 
     Operator * eq = new Operator(Equals);
-    operators["=="].push_back(make_tuple(_type("int"), _type("int"), eq));
-    operators["=="].push_back(make_tuple(_type("string"), _type("string"), eq));
-    operators["=="].push_back(make_tuple(_type("bool"), _type("bool"), eq));
+    operators["=="].push_back(make_tuple(_int->GetType(), _int->GetType(), eq));
+    operators["=="].push_back(make_tuple(_string->GetType(), _string->GetType(), eq));
+    operators["=="].push_back(make_tuple(_bool->GetType(), _bool->GetType(), eq));
     //operators["=="].push_back(make_tuple("", "", eq));
 
 }
 
 Script * IntegerToString(Script * self, Script * params)
 {
-    return _global->funcs["string"]->Execute(self->parent)->SetParent(self->parent);
+    return _string->Execute(self->parent)->SetParent(self->parent);
 }
 
 Script * ArrayToString(Script * self, Script * params)
 {
-    Script * str = _global->funcs["string"]->Execute(self);
+    Script * str = _string->Execute(self);
     string val = "[";
     function<void(string, Script *)>f = [&val](string key, Script * value)
     {
         if(value->funcs.count("ToString"))
-            val += value->funcs["ToString"]->Execute(value)->GetValue() + ", ";
+            val += value->funcs["ToString"]->Copy()->Execute(value)->GetValue() + ", ";
     };
     params->vars.foreach(f);
     if (params->vars.size()) val.pop_back(), val.pop_back();
@@ -897,7 +989,7 @@ Script * ArrayToString(Script * self, Script * params)
 
 Script * GetTicks(Script * self, Script * param)
 {
-    return _global->funcs["int"]->Execute(to_string(GetTickCount()));
+    return _int->Execute(to_string(GetTickCount()));
 }
 
 Script * ReturnThis(Script * self, Script * param)
@@ -905,42 +997,38 @@ Script * ReturnThis(Script * self, Script * param)
     return param;
 }
 
+void InitGlobal()
+{
+    _null = new Script(nullptr, "null", "null");
+
+    _int = new Script(nullptr, "int", "0");
+    _int->SetConstructor(IntConstructor);
+        Script * IntToString = new Script(_int, "function", "IntToString");
+        IntToString->SetConstructor(IntegerToString);
+    _int->funcs["ToString"] = IntToString;
+
+    _array = new Script(nullptr, "array", "[]");
+    _array->SetConstructor(ArrayConstructor);
+        Script * sizeFunc = new Script(_array, "function", "size");
+        sizeFunc->SetConstructor(SizeConstructor);
+    _array->AddFunc("size", sizeFunc);
+        Script * arrToString = new Script(_array, "function", "ArrayToString");
+        arrToString->SetConstructor(ArrayToString);
+    _array->AddFunc("ToString", arrToString);
+
+    _string = new Script(nullptr, "string", "");
+    _string->SetConstructor(StringConstructor);
+        Script * StringToString = new Script(_string, "function", "ToString");
+        StringToString->SetConstructor(ReturnThis);
+    _string->AddFunc("ToString", StringToString);
+
+    _bool = new Script(nullptr, "bool", "false");
+    _bool->SetConstructor(BoolConstructor);
+    _bool->AddFunc("ToString", IntToString);
+}
+
 void Scripting(Script * global)
 {
-
-    Script * _null = new Script(nullptr, "null", "null");
-    global->AddFunc("null", _null);
-
-    Script * _int = new Script(nullptr, "int", "0");
-        _int->SetConstructor(IntConstructor);
-            Script * IntToString = new Script(_int, "function", "IntToString");
-            IntToString->SetConstructor(IntegerToString);
-        _int->funcs["ToString"] = IntToString;
-    global->AddFunc("int", _int);
-
-    Script * _array = new Script(nullptr, "array", "[]");
-        _array->SetConstructor(ArrayConstructor);
-            Script * sizeFunc = new Script(_array, "function", "size");
-            sizeFunc->SetConstructor(SizeConstructor);
-        _array->AddFunc("size", sizeFunc);
-            Script * arrToString = new Script(_array, "function", "ArrayToString");
-            arrToString->SetConstructor(ArrayToString);
-        _array->AddFunc("ToString", arrToString);
-    global->AddFunc("array", _array);
-
-    Script * _string = new Script(nullptr, "string", "");
-        _string->SetConstructor(StringConstructor);
-            Script * StringToString = new Script(_string, "function", "ToString");
-            StringToString->SetConstructor(ReturnThis);
-        _string->AddFunc("ToString", StringToString);
-    global->AddFunc("string", _string);
-
-    Script * _bool = new Script(nullptr, "bool", "false");
-        _bool->SetConstructor(BoolConstructor);
-        _bool->AddFunc("ToString", IntToString);
-    global->AddFunc("bool", _bool);
-
-
         Script * _count = new Script(nullptr, "func", "CountString");
         _count->SetConstructor(CountC);
     global->AddFunc("count", _count);
@@ -952,7 +1040,7 @@ void Scripting(Script * global)
         _ticks->SetConstructor(GetTicks);
     global->AddFunc("ticks", _ticks);
 
-    _global = global;
+    //_global = global;
 
     /// Exec\n
     Script * temp(global);

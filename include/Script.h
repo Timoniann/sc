@@ -42,11 +42,13 @@ class Script
         Script * FuncToExecute(string funcName);
         Script * SetParent(Script * parent);
         Script * Clone(Script * to);
+        Script * Copy();
         string GetValue();
 
         void SetConstructor(Script* (* func)(Script * self, Script * params));
         //void AddVar(string name, Script * value);
         void SetValue(string val);
+        void SetParams(Script * params);
 
         string GetType();
         string StackVariables();
@@ -61,7 +63,7 @@ class Script
     private:
         //Dictionary<string, Script> operators;
         //make_tuple(COMMAND_ID, "variable", "values");
-        vector<string> params;
+        Script * params = nullptr;
         void process_op (vector<Script*> & st, string op);
 };
 
@@ -77,6 +79,8 @@ protected:
 };
 
 void InitOperators();
+
+void InitGlobal();
 
 void Scripting(Script * global);
 
