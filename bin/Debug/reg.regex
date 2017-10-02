@@ -1,0 +1,8 @@
+integer 					([\d]+)
+float 						([\d]+)(\.)([\d]+)
+VarName 					([a-zA-Z])([\w]*)
+type 						(type\b)
+call func withoout params 	(([a-zA-Z])([\w]*))(\()(\))
+string literals				("[^"\\]*(\\.[^"\\]*)*")
+figure brackets literals	({[^{\\]*(\\.[^}\\]*)*})
+brackets literals 			(\([^\(\\]*(\\.[^\)\\]*)*\))

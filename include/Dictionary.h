@@ -59,7 +59,6 @@ class Dictionary
 
         ValueType & operator[](KeyType key)
         {
-            int a = data.size();
             for(typename vector<pair<KeyType, ValueType>>::iterator it = data.begin(); it != data.end(); it++)
                 if((*it).first == key) return (*it).second;
             return add(key);

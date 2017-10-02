@@ -50,7 +50,7 @@ void Handler(Script * script)
         if(cmd == "all") { cout << script->StackVariables(); }
         else if(cmd == "get all scripts"){
             vector<Script*> scripts = getAllScripts();
-            for(int i = 0; i < scripts.size(); i++){
+            for(unsigned int i = 0; i < scripts.size(); i++){
                 if(scripts[i] == nullptr) cout << "Nullptr\n";
                 else
                 cout << "Type: '"

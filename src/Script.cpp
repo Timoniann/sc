@@ -2,6 +2,7 @@
 
 #include <basic.h>
 #include <algorithm>
+#include <regex>
 
 #define ORDER_CREATE 1
 #define ORDER_CALL 2
@@ -43,14 +44,15 @@ Script::Script()
 }
 
 Script::Script(Script * parent) : Script()
-{ this->parent = parent; }
+{
+    this->parent = parent;
+}
 
 Script::Script(Script * parent, string type, string value) : Script()
 {
     this->parent = parent;
     if(parent == nullptr) this->type = type;
     else this->type = parent->GetType() + '.' + type;
-    //this->type = type;
     this->value = value;
 }
 
@@ -74,6 +76,8 @@ Script::Script(Script* (* func)(Script * self, Script * params)) : Script()
 #define ELSE 12
 #define RETURN 13
 #define TYPE_PUSHED_PARAM 14
+#define FOR 15
+#define FOR_PUSH_PARAMS 16
 
 
 void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
@@ -130,8 +134,14 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         continue;
                     }
                     else if(word == "return"){
-                        if(last != NOTHING) Log("Wrong using return statement", MessageError, j);
+                        if(last != NOTHING) Log("Wrong using 'return' statement", MessageError, i);
                         modify = RETURN;
+                        continue;
+                    }
+                    else if(word == "for"){
+                        if(last != NOTHING) Log("Wrong using 'for' loop", MessageError, i);
+                        last = FOR;
+                        modify = FOR;
                         continue;
                     }
                     else if(last == MODIFICATOR) {
@@ -189,10 +199,14 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         last = TYPE_PUSH_PARAMS;
                         continue;
                     }
-                    else if (last == IF){
+                    else if(last == IF){
                         //last = IF_OPEN;
                         last = NOTHING;
                         modify = IF;
+                        continue;
+                    }
+                    else if(last == FOR){
+
                         continue;
                     }
                     else Log("Syntax error. Operator '(' after string can't be used", MessageEasyError, i);
@@ -238,6 +252,7 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                     last = NOTHING;
                     modify = NOTHING;
                     doted = false;
+                    path = "";
                     continue;
                 }
                 else if(c == '/' && strs[i][j + 1] == '/')
@@ -264,9 +279,9 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         Script * par = new Script();
                         _array->Clone(par);
                         for(auto it = type_params.begin(); it != type_params.end(); it++){
-                            //cout << "~~~~~~~~~ PARAMETER (" + (*it) + ") ~~~~~~~~~\n";
                             par->AddVar((*it), _null->Copy()->SetParent(this));
                         }
+                        type_params.clear();
 
                         newScript->SetParams(par);
                         j++;
@@ -274,6 +289,13 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                         newScript->Handler(strs, i, j);
                         str = strs[i];
                         AddFunc(newScriptName, newScript);
+
+                        last = NOTHING;
+                        modify = NOTHING;
+                        doted = false;
+                        triple.clear();
+                        path = "";
+
                         continue;
                     }
                     else {
@@ -292,7 +314,6 @@ void Script::Handler(vector<string> & strs, unsigned int & i, unsigned int & j)
                 }
                 else if(c == '}') {
                     if(parent != nullptr){
-                        j++;
                         Log("Close function", MessageWarning, i);
                         return;
                     }
@@ -317,7 +338,6 @@ Script * Script::FuncToExecute(string funcName)
 {
     if(funcName == "this") return parent;
     if(funcName == "self") return this;
-    //if(params.contains(funcName));
     Script * current = this;
     while(current){
         if(current->funcs.count(funcName))
@@ -330,32 +350,21 @@ Script * Script::FuncToExecute(string funcName)
 }
 
 Script * Script::Execute(Script * parameters)
-{/*
-    if(params == nullptr);// cout << "NULLPTR\n";
-    else params->vars.foreach([](string key, Script * value)
-         {
-             //cout << "----- Key: " << key << "; Value: " << value->GetValue() << " -----\n";
-         });*/
+{
     if(constructor != nullptr)
         return constructor(this, parameters);
-    int iter = 0;
-    //params = new Script(this);
-    //_array->Clone(params);
+    unsigned int iter = 0;
     if(parameters == nullptr) Log("Parameters cannot be nullptr", MessageError);
     else if(parameters->GetType() != _array->GetType()) Log("Parameters must be array, but given '" + parameters->GetType() + "'", MessageError);
-    else
-    for(auto it = parameters->vars.begin(); it != parameters->vars.end(); it++){
-        if(params->vars.size() > iter) params->vars[iter++] = (*it).second;
-        else params->AddVar((*it).second);
+    else{
+        for(auto it = parameters->vars.begin(); it != parameters->vars.end(); it++)
+            if(params->vars.size() > iter) params->vars[iter++] = (*it).second;
+            else params->AddVar((*it).second);
+        for(auto it = params->vars.begin(); it != params->vars.end(); it++)
+            vars[(*it).first] = (*it).second;
     }
 
-    int c = 0;
-    //if(params == nullptr) params = new Script(this, "null", "null");
     vars["params"] = params;
-    //if(vars.count("params")) vars["params"] = params;
-    //else AddVar("params", params);
-
-    //for(mass::iterator it = t.begin(); it != t.end(); it++)
 
     cout << "Start view\n";
     cout << cmds.size() << " - size\n";
@@ -534,6 +543,13 @@ Script * Script::Execute(Script * parameters)
                         else {
                             Log("I got false");
                             i+=2;
+                            if(cmds.size() - 1 < i){
+                                i = cmds.size();
+                                j = cmd.size();
+                                op.clear();
+                                st.clear();
+                                break;
+                            }
                             cmd = cmds[i];
                             j = 0;
                             op.clear();
@@ -551,10 +567,8 @@ Script * Script::Execute(Script * parameters)
             case ORDER_PUSH_RETURN:
                 while (!op.empty())
                     process_op (st, op.back()),  op.pop_back();
-                if(st.size() == 0) {
-                    Log("Can't return anything", MessageError, get<2>(t));
+                if(st.size() == 0)
                     return _null->Copy();
-                }
                 return st.back();
                 break;
             case ORDER_PUSH_POINTER:
@@ -868,20 +882,15 @@ Script * Multi(Script * p1, Script * p2)
 
 Script * Comma(Script * p1, Script * p2)
 {
-    int a = allScripts.size();
     Script * result = new Script();
     if(p1->GetType() == _array->GetType()){
         p1->Clone(result);
         result->AddVar(p2);
         return result;
     }
-    a = allScripts.size();
     _array->Clone(result);
-    a = allScripts.size();
-    //Script * result = _global->funcs["array"]->Execute("Array throw comma");
     result->AddVar(p1);
     result->AddVar(p2);
-    a = allScripts.size();
     return result;
 }
 
@@ -978,10 +987,11 @@ Script * BoolConstructor(Script * self, Script * params)
         else newBool->SetValue("true");
     else if(params->GetType() == "bool")
         newBool->SetValue(params->GetValue());
-    else if(params->GetType() == "string")
-        if(params->GetValue() == "" || params->GetValue() == "0")
-        newBool->SetValue("false");
-    else newBool->SetValue("true");
+    else if(params->GetType() == "string"){
+            if(params->GetValue() == "" || params->GetValue() == "0")
+                newBool->SetValue("false");
+            else newBool->SetValue("true");
+        }
     return newBool;
 }
 
@@ -1119,7 +1129,7 @@ vector<Script*> & getAllScripts()
 }
 
 void DeleteAllScripts(){
-    for(int i = 0; i < allScripts.size(); i++){
+    for(unsigned int i = 0; i < allScripts.size(); i++){
         delete allScripts[i];
     }
     allScripts.clear();
